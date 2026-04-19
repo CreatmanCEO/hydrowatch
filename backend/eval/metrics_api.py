@@ -26,8 +26,8 @@ SAMPLE_METRICS = {
         "model": "cerebras/llama-3.3-70b",
         "pool": "pool-a (fallback)",
         "total_cases": 48,
-        "accuracy": 0.792,
-        "schema_compliance": 0.729,
+        "accuracy": 0.833,
+        "schema_compliance": 0.854,
         "latency_p50": 280,
         "latency_p95": 680,
         "cost_per_request": 0.000062,
@@ -61,6 +61,14 @@ SAMPLE_METRICS = {
 }
 
 
+POOL_MAP = {
+    "gemini/gemini-2.5-flash": "pool-a",
+    "cerebras/llama-3.3-70b": "pool-a (fallback)",
+    "anthropic/claude-haiku-4-5-20251001": "pool-b",
+    "anthropic/claude-sonnet-4-5-20250514": "pool-b-upgrade",
+}
+
+
 @router.get("")
 async def get_metrics():
     """Return latest eval metrics. Uses actual results if available, sample data otherwise."""
@@ -68,7 +76,12 @@ async def get_metrics():
 
     if summary_path.exists():
         with open(summary_path) as f:
-            return {"source": "eval_run", "models": json.load(f)}
+            models = json.load(f)
+        # Enrich with pool info
+        for model_name, metrics in models.items():
+            if "pool" not in metrics:
+                metrics["pool"] = POOL_MAP.get(model_name, "unknown")
+        return {"source": "eval_run", "models": models}
 
     return {"source": "sample", "models": SAMPLE_METRICS}
 
