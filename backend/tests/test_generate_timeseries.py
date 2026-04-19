@@ -22,7 +22,7 @@ class TestTimeSeriesGeneration:
         assert len(df) == 365 * 4
 
     def test_values_in_realistic_ranges(self):
-        df, _ = generate_well_timeseries("W-001", days=90)
+        df, _ = generate_well_timeseries("W-001", days=90, seed=42)
         assert df["debit_ls"].min() >= 0
         assert 500 < df["tds_mgl"].mean() < 15000
         assert 6.0 < df["ph"].mean() < 9.5

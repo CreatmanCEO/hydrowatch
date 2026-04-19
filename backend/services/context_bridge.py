@@ -5,13 +5,14 @@ from pathlib import Path
 
 from models.schemas import MapContext
 
-DATA_DIR = os.environ.get("DATA_DIR", "./data")
+def _get_data_dir() -> str:
+    return os.environ.get("DATA_DIR", "./data")
 
 
 def load_wells_data() -> dict[str, dict]:
     """Load wells from GeoJSON keyed by well ID."""
-    path = Path(DATA_DIR) / "wells.geojson"
-    with open(path) as f:
+    path = Path(_get_data_dir()) / "wells.geojson"
+    with open(path, encoding="utf-8") as f:
         geojson = json.load(f)
 
     wells = {}

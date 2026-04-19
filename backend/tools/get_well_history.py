@@ -8,7 +8,8 @@ from scipy.stats import linregress
 
 from models.schemas import WellHistory
 
-DATA_DIR = os.environ.get("DATA_DIR", "./data")
+def _get_data_dir() -> str:
+    return os.environ.get("DATA_DIR", "./data")
 
 
 def get_well_history(
@@ -17,7 +18,7 @@ def get_well_history(
     last_n_days: int | None = None,
 ) -> WellHistory:
     """Get time series for a well with trend analysis."""
-    csv_path = Path(DATA_DIR) / "observations" / f"{well_id}.csv"
+    csv_path = Path(_get_data_dir()) / "observations" / f"{well_id}.csv"
     if not csv_path.exists():
         raise FileNotFoundError(f"No observation data for well {well_id}")
 

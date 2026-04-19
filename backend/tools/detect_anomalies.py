@@ -9,7 +9,8 @@ from scipy.stats import linregress
 
 from models.schemas import AnomalyCard
 
-DATA_DIR = os.environ.get("DATA_DIR", "./data")
+def _get_data_dir() -> str:
+    return os.environ.get("DATA_DIR", "./data")
 
 
 def _detect_debit_decline(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
@@ -124,7 +125,7 @@ def detect_anomalies(well_id: str | None = None) -> list[AnomalyCard]:
     Returns:
         List of AnomalyCard objects.
     """
-    obs_dir = Path(DATA_DIR) / "observations"
+    obs_dir = Path(_get_data_dir()) / "observations"
     cards = []
 
     if well_id:

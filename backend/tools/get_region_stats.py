@@ -7,14 +7,15 @@ import numpy as np
 
 from models.schemas import RegionStats
 
-DATA_DIR = os.environ.get("DATA_DIR", "./data")
+def _get_data_dir() -> str:
+    return os.environ.get("DATA_DIR", "./data")
 
 
 def get_region_stats(
     bbox: list[float],
 ) -> RegionStats:
     """Aggregate stats for wells within bbox [west, south, east, north]."""
-    path = Path(DATA_DIR) / "wells.geojson"
+    path = Path(_get_data_dir()) / "wells.geojson"
     if not path.exists():
         raise FileNotFoundError(f"Wells data not found at {path}. Run: python -m data_generator.generate_wells")
     with open(path, encoding="utf-8") as f:

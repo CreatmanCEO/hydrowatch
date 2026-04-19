@@ -37,7 +37,10 @@ class Settings(BaseSettings):
     langfuse_secret_key: SecretStr = SecretStr("")
     langfuse_host: str = "http://localhost:3001"
 
-    model_config = {"env_file": ".env", "env_file_encoding": "utf-8"}
+    model_config = {
+        "env_file": [".env", str(Path(__file__).resolve().parent.parent / ".env")],
+        "env_file_encoding": "utf-8",
+    }
 
 
 def get_settings() -> Settings:

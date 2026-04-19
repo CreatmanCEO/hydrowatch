@@ -5,12 +5,13 @@ from pathlib import Path
 
 from models.schemas import WellInfo
 
-DATA_DIR = os.environ.get("DATA_DIR", "./data")
+def _get_data_dir() -> str:
+    return os.environ.get("DATA_DIR", "./data")
 
 
 def _load_wells() -> list[dict]:
     """Load wells from GeoJSON."""
-    path = Path(DATA_DIR) / "wells.geojson"
+    path = Path(_get_data_dir()) / "wells.geojson"
     if not path.exists():
         raise FileNotFoundError(f"Wells data not found at {path}. Run: python -m data_generator.generate_wells")
     with open(path, encoding="utf-8") as f:
