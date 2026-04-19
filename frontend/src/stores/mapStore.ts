@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 import type { WellProperties, WellsGeoJSON, MapContext } from "@/types";
 import { buildMapContext } from "@/lib/contextBridge";
 
@@ -32,41 +33,46 @@ interface MapState {
   getApiContext: () => MapContext;
 }
 
-export const useMapStore = create<MapState>((set, get) => ({
-  // Default: Abu Dhabi center
-  latitude: 24.42,
-  longitude: 54.85,
-  zoom: 9,
-  bounds: null,
+export const useMapStore = create<MapState>()(
+  devtools(
+    (set, get) => ({
+      // Default: Abu Dhabi center
+      latitude: 24.42,
+      longitude: 54.85,
+      zoom: 9,
+      bounds: null,
 
-  activeLayers: ["wells"],
-  selectedWellId: null,
-  selectedWell: null,
-  filters: {},
+      activeLayers: ["wells"],
+      selectedWellId: null,
+      selectedWell: null,
+      filters: {},
 
-  wellsGeoJSON: null,
+      wellsGeoJSON: null,
 
-  setViewport: (latitude, longitude, zoom) =>
-    set({ latitude, longitude, zoom }),
+      setViewport: (latitude, longitude, zoom) =>
+        set({ latitude, longitude, zoom }),
 
-  setBounds: (bounds) => set({ bounds }),
+      setBounds: (bounds) => set({ bounds }),
 
-  toggleLayer: (layer) =>
-    set((s) => ({
-      activeLayers: s.activeLayers.includes(layer)
-        ? s.activeLayers.filter((l) => l !== layer)
-        : [...s.activeLayers, layer],
-    })),
+      toggleLayer: (layer) =>
+        set((s) => ({
+          activeLayers: s.activeLayers.includes(layer)
+            ? s.activeLayers.filter((l) => l !== layer)
+            : [...s.activeLayers, layer],
+        })),
 
-  selectWell: (wellId, properties = null) =>
-    set({ selectedWellId: wellId, selectedWell: properties ?? null }),
+      selectWell: (wellId, properties = null) =>
+        set({ selectedWellId: wellId, selectedWell: properties ?? null }),
 
-  setWellsGeoJSON: (data) => set({ wellsGeoJSON: data }),
+      setWellsGeoJSON: (data) => set({ wellsGeoJSON: data }),
 
-  setFilters: (filters) => set({ filters }),
+      setFilters: (filters) => set({ filters }),
 
-  getApiContext: () => {
-    const s = get();
-    return buildMapContext(s);
-  },
-}));
+      getApiContext: () => {
+        const s = get();
+        return buildMapContext(s);
+      },
+    }),
+    { name: "MapStore" }
+  )
+);

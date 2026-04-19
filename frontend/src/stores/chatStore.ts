@@ -1,6 +1,7 @@
 'use client';
 
 import { create } from "zustand";
+import { devtools } from "zustand/middleware";
 import { fetchEventSource } from "@microsoft/fetch-event-source";
 import type { ChatMessage, StructuredCard, SSEEvent, MapContext } from "@/types";
 
@@ -8,7 +9,6 @@ interface ChatState {
   messages: ChatMessage[];
   streamingText: string;
   isLoading: boolean;
-  abortController: AbortController | null;
 
   // Actions
   sendMessage: (text: string, mapContext: MapContext) => Promise<void>;
@@ -17,132 +17,135 @@ interface ChatState {
 }
 
 let messageCounter = 0;
+let activeController: AbortController | null = null;
 
 function nextId(): string {
   return `msg-${++messageCounter}-${Date.now()}`;
 }
 
-export const useChatStore = create<ChatState>((set, get) => ({
-  messages: [],
-  streamingText: "",
-  isLoading: false,
-  abortController: null,
-
-  sendMessage: async (text, mapContext) => {
-    const userMsg: ChatMessage = {
-      id: nextId(),
-      role: "user",
-      content: text,
-      timestamp: new Date(),
-    };
-
-    set((s) => ({
-      messages: [...s.messages, userMsg],
+export const useChatStore = create<ChatState>()(
+  devtools(
+    (set) => ({
+      messages: [],
       streamingText: "",
-      isLoading: true,
-    }));
+      isLoading: false,
 
-    const ctrl = new AbortController();
-    set({ abortController: ctrl });
+      sendMessage: async (text, mapContext) => {
+        const userMsg: ChatMessage = {
+          id: nextId(),
+          role: "user",
+          content: text,
+          timestamp: new Date(),
+        };
 
-    let assistantContent = "";
-    const cards: StructuredCard[] = [];
+        set((s) => ({
+          messages: [...s.messages, userMsg],
+          streamingText: "",
+          isLoading: true,
+        }));
 
-    try {
-      await fetchEventSource("/api/chat/stream", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          message: text,
-          map_context: mapContext,
-        }),
-        signal: ctrl.signal,
+        activeController = new AbortController();
 
-        onmessage(ev) {
-          if (ev.data === "[DONE]") return;
+        let assistantContent = "";
+        const cards: StructuredCard[] = [];
 
-          try {
-            const event: SSEEvent = JSON.parse(ev.data);
+        try {
+          await fetchEventSource("/api/chat/stream", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              message: text,
+              map_context: mapContext,
+            }),
+            signal: activeController.signal,
 
-            switch (event.type) {
-              case "token":
-                assistantContent += event.content;
-                set({ streamingText: assistantContent });
-                break;
+            onmessage(ev) {
+              if (ev.data === "[DONE]") return;
 
-              case "tool_result":
-                if (event.result && typeof event.result === "object") {
-                  const result = event.result as Record<string, unknown>;
-                  if (result.type === "anomaly_card" || result.type === "validation_result" ||
-                      result.type === "region_stats" || result.type === "well_history") {
-                    cards.push(result as unknown as StructuredCard);
-                  } else if (Array.isArray(event.result)) {
-                    for (const item of event.result as Record<string, unknown>[]) {
-                      if (item.type) cards.push(item as unknown as StructuredCard);
+              try {
+                const event: SSEEvent = JSON.parse(ev.data);
+
+                switch (event.type) {
+                  case "token":
+                    assistantContent += event.content;
+                    set({ streamingText: assistantContent });
+                    break;
+
+                  case "tool_result":
+                    if (Array.isArray(event.result)) {
+                      for (const item of event.result) {
+                        if (item && typeof item === "object" && "type" in item) {
+                          cards.push(item as StructuredCard);
+                        }
+                      }
+                    } else if (event.result && typeof event.result === "object" && "type" in (event.result as object)) {
+                      cards.push(event.result as StructuredCard);
                     }
-                  }
+                    break;
+
+                  case "error":
+                    assistantContent += `\n\n**Error:** ${event.message}`;
+                    set({ streamingText: assistantContent });
+                    break;
+
+                  case "done":
+                    break;
                 }
-                break;
+              } catch {
+                // ignore parse errors
+              }
+            },
 
-              case "error":
-                assistantContent += `\n\n**Error:** ${event.message}`;
-                set({ streamingText: assistantContent });
-                break;
+            onclose() {
+              const assistantMsg: ChatMessage = {
+                id: nextId(),
+                role: "assistant",
+                content: assistantContent,
+                cards: cards.length > 0 ? cards : undefined,
+                timestamp: new Date(),
+              };
 
-              case "done":
-                break;
-            }
-          } catch {
-            // ignore parse errors
-          }
-        },
+              set((s) => ({
+                messages: [...s.messages, assistantMsg],
+                streamingText: "",
+                isLoading: false,
+              }));
+              activeController = null;
+            },
 
-        onclose() {
-          const assistantMsg: ChatMessage = {
+            onerror(err) {
+              set({ isLoading: false });
+              activeController = null;
+              throw err;
+            },
+          });
+        } catch (err) {
+          if ((err as Error).name === "AbortError") return;
+
+          const errorMsg: ChatMessage = {
             id: nextId(),
             role: "assistant",
-            content: assistantContent,
-            cards: cards.length > 0 ? cards : undefined,
+            content: `Connection error: ${(err as Error).message}`,
             timestamp: new Date(),
           };
 
           set((s) => ({
-            messages: [...s.messages, assistantMsg],
+            messages: [...s.messages, errorMsg],
             streamingText: "",
             isLoading: false,
-            abortController: null,
           }));
-        },
+          activeController = null;
+        }
+      },
 
-        onerror(err) {
-          set({ isLoading: false, abortController: null });
-          throw err;
-        },
-      });
-    } catch (err) {
-      if ((err as Error).name === "AbortError") return;
+      cancelStream: () => {
+        activeController?.abort();
+        activeController = null;
+        set({ isLoading: false, streamingText: "" });
+      },
 
-      const errorMsg: ChatMessage = {
-        id: nextId(),
-        role: "assistant",
-        content: `Connection error: ${(err as Error).message}`,
-        timestamp: new Date(),
-      };
-
-      set((s) => ({
-        messages: [...s.messages, errorMsg],
-        streamingText: "",
-        isLoading: false,
-        abortController: null,
-      }));
-    }
-  },
-
-  cancelStream: () => {
-    const ctrl = get().abortController;
-    if (ctrl) ctrl.abort();
-    set({ isLoading: false, abortController: null, streamingText: "" });
-  },
-
-  clearMessages: () => set({ messages: [], streamingText: "" }),
-}));
+      clearMessages: () => set({ messages: [], streamingText: "" }),
+    }),
+    { name: "ChatStore" }
+  )
+);

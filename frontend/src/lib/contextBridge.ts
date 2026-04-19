@@ -14,6 +14,7 @@ export function buildMapContext(state: {
     center_lat: state.latitude,
     center_lng: state.longitude,
     zoom: state.zoom,
+    // Fallback: entire Abu Dhabi region until map fires first onMoveEnd
     bbox: state.bounds ?? [54.0, 24.0, 56.0, 25.0],
     active_layers: state.activeLayers,
     selected_well_id: state.selectedWellId,
