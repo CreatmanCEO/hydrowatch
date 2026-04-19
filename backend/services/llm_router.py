@@ -39,12 +39,19 @@ def create_router() -> Router:
                 "api_key": settings.cerebras_api_key.get_secret_value(),
             },
         },
-        # Pool B — complex tasks
+        # Pool B — complex tasks (Anthropic primary, Gemini fallback)
         {
             "model_name": "pool-b",
             "litellm_params": {
                 "model": settings.model_pool_b_default,
                 "api_key": settings.anthropic_api_key.get_secret_value(),
+            },
+        },
+        {
+            "model_name": "pool-b",
+            "litellm_params": {
+                "model": settings.model_pool_a_primary,
+                "api_key": settings.gemini_api_key.get_secret_value(),
             },
         },
         {
