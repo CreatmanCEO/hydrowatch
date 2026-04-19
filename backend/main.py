@@ -130,7 +130,7 @@ async def upload_csv(file: UploadFile = File(...)):
     # Save to temp file for validation
     upload_dir = Path(settings.data_dir) / "uploads"
     upload_dir.mkdir(parents=True, exist_ok=True)
-    temp_path = upload_dir / file.filename
+    temp_path = upload_dir / Path(file.filename).name
     temp_path.write_bytes(contents)
 
     try:
@@ -145,7 +145,9 @@ async def upload_csv(file: UploadFile = File(...)):
 # ---------------------------------------------------------------------------
 
 def _classify_task(message: str) -> str:
-    """Simple heuristic to classify user message into task type."""
+    """Simple heuristic to classify user message into task type.
+    # TODO: Replace with LLM-based intent classifier in production
+    """
     msg = message.lower()
     if any(w in msg for w in ["csv", "upload", "validate", "file"]):
         return "validate_csv"
@@ -238,14 +240,16 @@ async def chat_stream(request: ChatRequest):
                     collected_content += delta.content
                     yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
 
-                # Collect tool calls
+                # Collect tool calls (arguments arrive in chunks during streaming)
                 if delta.tool_calls:
                     for tc in delta.tool_calls:
-                        if tc.function:
-                            tool_calls_buffer.append({
-                                "name": tc.function.name,
-                                "arguments": tc.function.arguments,
-                            })
+                        if tc.index is not None:
+                            while len(tool_calls_buffer) <= tc.index:
+                                tool_calls_buffer.append({"name": "", "arguments": ""})
+                            if tc.function and tc.function.name:
+                                tool_calls_buffer[tc.index]["name"] = tc.function.name
+                            if tc.function and tc.function.arguments:
+                                tool_calls_buffer[tc.index]["arguments"] += tc.function.arguments
 
             # 7. Execute tool calls if any
             for tc in tool_calls_buffer:
