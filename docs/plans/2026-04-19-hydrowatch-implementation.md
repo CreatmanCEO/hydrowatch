@@ -7,7 +7,8 @@
 **Architecture:** FastAPI backend with MCP-style tool calling via LiteLLM/Instructor (Gemini 2.5 Flash), SSE streaming, Pydantic-validated structured output. Next.js 15 frontend with MapLibre map (react-map-gl), Zustand state management, and a chat panel consuming SSE. Synthetic data generator produces realistic Abu Dhabi groundwater well data with injected anomalies. Eval module uses Gemini Batch API to compare model quality with analytical metrics.
 
 **Tech Stack:**
-- Backend: Python 3.12, FastAPI, LiteLLM, Instructor, Langfuse, DeepEval, Pydantic v2, numpy, scipy, pandas, geopandas, shapely, adtk
+- Backend: Python 3.12, FastAPI, LiteLLM, Instructor, Langfuse, DeepEval, Pydantic v2, SQLAlchemy 2.0 (async), Alembic, asyncpg, numpy, scipy, pandas, geopandas, shapely, adtk
+- Database: PostgreSQL 16 + PostGIS 3.4 (Docker) — wells geometry, observations, anomalies, chat history, eval metrics
 - Frontend: Next.js 15, TypeScript, React, react-map-gl, MapLibre GL JS, Zustand, @turf/circle, @microsoft/fetch-event-source, Tailwind CSS
 - LLM Pool A (simple/medium): Gemini 2.5 Flash ↔ Cerebras Llama 3.3 70B (mutual fallback via LiteLLM)
 - LLM Pool B (complex): Anthropic Haiku 4.5 (default) → Sonnet 4.5 (upgrade for reasoning)
@@ -65,7 +66,15 @@ hydrowatch/
 │   ├── models/
 │   │   ├── __init__.py
 │   │   ├── schemas.py            # Pydantic: Well, Anomaly, MapContext, ToolResult, etc.
-│   │   └── tool_schemas.py       # Tool definitions (JSON Schema for LLM)
+│   │   ├── tool_schemas.py       # Tool definitions (JSON Schema for LLM)
+│   │   └── database.py           # SQLAlchemy ORM models (wells, observations, etc.)
+│   ├── db/
+│   │   ├── __init__.py
+│   │   ├── session.py            # async engine + session factory
+│   │   ├── seed.py               # seed DB from generated GeoJSON/CSV
+│   │   └── migrations/
+│   │       ├── env.py            # Alembic async config
+│   │       └── versions/         # migration files
 │   ├── services/
 │   │   ├── __init__.py
 │   │   ├── llm_router.py         # LiteLLM + Instructor, model routing
@@ -202,6 +211,10 @@ litellm==1.83.10
 instructor[google-genai]==1.15.1
 langfuse==4.3.1
 deepeval==3.9.7
+sqlalchemy[asyncio]==2.0.40
+alembic==1.15.2
+asyncpg==0.30.0
+geoalchemy2==0.17.1
 numpy==2.2.5
 scipy==1.15.3
 pandas==2.2.3
@@ -237,6 +250,9 @@ class Settings(BaseSettings):
     model_pool_b_complex: str = "anthropic/claude-sonnet-4-5-20250514"
 
     llm_temperature: float = 0.1
+
+    # Database
+    database_url: str = "postgresql+asyncpg://hydrowatch:hydrowatch_dev@localhost:5432/hydrowatch"
 
     # Server
     host: str = "0.0.0.0"
@@ -671,6 +687,335 @@ print(f'Generated {len(data)} time series')
 "
 git add backend/data_generator/generate_timeseries.py backend/tests/test_generate_timeseries.py
 git commit -m "feat: time series generator with anomaly injection — debit decline, TDS spike, sensor fault"
+git push
+```
+
+---
+
+### Phase 1.5: Database (PostgreSQL + PostGIS)
+
+---
+
+### Task 5: PostgreSQL + PostGIS + SQLAlchemy models + Alembic
+
+**Files:**
+- Create: `backend/models/database.py`
+- Create: `backend/db/__init__.py`
+- Create: `backend/db/session.py`
+- Create: `backend/db/seed.py`
+- Create: `backend/db/migrations/env.py`
+- Create: `backend/tests/test_database.py`
+- Modify: `backend/config.py` (add database_url)
+- Modify: `docker-compose.yml` (add postgres service)
+
+**Step 1: Add PostgreSQL + PostGIS to docker-compose.yml**
+
+```yaml
+services:
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
+    environment:
+      POSTGRES_DB: hydrowatch
+      POSTGRES_USER: hydrowatch
+      POSTGRES_PASSWORD: hydrowatch_dev
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U hydrowatch"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  pgdata:
+```
+
+**Step 2: Create backend/db/session.py**
+
+```python
+"""Async SQLAlchemy session factory."""
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from config import get_settings
+
+settings = get_settings()
+
+engine = create_async_engine(settings.database_url, echo=False)
+async_session = async_sessionmaker(engine, expire_on_commit=False)
+
+
+async def get_db() -> AsyncSession:
+    """FastAPI dependency for database sessions."""
+    async with async_session() as session:
+        yield session
+```
+
+**Step 3: Create backend/models/database.py — SQLAlchemy ORM models**
+
+```python
+"""SQLAlchemy ORM models with PostGIS geometry."""
+from datetime import datetime
+from uuid import uuid4
+from sqlalchemy import (
+    String, Float, Integer, DateTime, Boolean, Text, JSON,
+    ForeignKey, Index, func,
+)
+from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
+from geoalchemy2 import Geometry
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+class Well(Base):
+    """Monitoring well with PostGIS geometry."""
+    __tablename__ = "wells"
+
+    id: Mapped[str] = mapped_column(String(20), primary_key=True)  # e.g. "AUH-01-003"
+    name: Mapped[str] = mapped_column(String(100))
+    cluster_id: Mapped[str] = mapped_column(String(20), index=True)
+    cluster_name: Mapped[str] = mapped_column(String(100))
+
+    # PostGIS geometry (Point, SRID 4326 = WGS84)
+    geometry: Mapped[str] = mapped_column(Geometry("POINT", srid=4326))
+
+    # Well construction
+    well_depth_m: Mapped[float] = mapped_column(Float)
+    aquifer_type: Mapped[str] = mapped_column(String(50))
+    casing_diameter_mm: Mapped[int] = mapped_column(Integer)
+    ground_elevation_m: Mapped[float] = mapped_column(Float)
+
+    # Hydraulic parameters
+    transmissivity_m2d: Mapped[float] = mapped_column(Float)
+    storativity: Mapped[float] = mapped_column(Float)
+
+    # Current state
+    status: Mapped[str] = mapped_column(String(20), index=True)  # active/inactive/maintenance
+    current_yield_ls: Mapped[float] = mapped_column(Float)
+    static_water_level_m: Mapped[float] = mapped_column(Float)
+
+    # Latest quality (denormalized for quick access)
+    last_tds_mgl: Mapped[float] = mapped_column(Float)
+    last_ph: Mapped[float] = mapped_column(Float)
+    last_chloride_mgl: Mapped[float] = mapped_column(Float)
+    last_temperature_c: Mapped[float] = mapped_column(Float)
+
+    # Metadata
+    operator: Mapped[str] = mapped_column(String(50))
+    installation_date: Mapped[str] = mapped_column(String(10))
+    properties: Mapped[dict] = mapped_column(JSONB, default=dict)  # extra properties
+
+    # Relationships
+    observations: Mapped[list["Observation"]] = relationship(back_populates="well")
+    anomalies: Mapped[list["Anomaly"]] = relationship(back_populates="well")
+
+    # Spatial index
+    __table_args__ = (
+        Index("idx_wells_geometry", "geometry", postgresql_using="gist"),
+    )
+
+
+class Observation(Base):
+    """Time series observation for a well."""
+    __tablename__ = "observations"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id"), index=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, index=True)
+
+    debit_ls: Mapped[float] = mapped_column(Float)
+    tds_mgl: Mapped[float] = mapped_column(Float)
+    ph: Mapped[float] = mapped_column(Float)
+    chloride_mgl: Mapped[float] = mapped_column(Float)
+    water_level_m: Mapped[float] = mapped_column(Float)
+    temperature_c: Mapped[float] = mapped_column(Float)
+
+    well: Mapped["Well"] = relationship(back_populates="observations")
+
+    __table_args__ = (
+        Index("idx_obs_well_time", "well_id", "timestamp"),
+    )
+
+
+class Anomaly(Base):
+    """Detected anomaly record."""
+    __tablename__ = "anomalies"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id"), index=True)
+    detected_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+    anomaly_type: Mapped[str] = mapped_column(String(30))  # debit_decline, depression_cone, interference
+    severity: Mapped[str] = mapped_column(String(10))       # low, medium, high, critical
+    title: Mapped[str] = mapped_column(String(200))
+    description: Mapped[str] = mapped_column(Text)
+    value_current: Mapped[float] = mapped_column(Float)
+    value_baseline: Mapped[float] = mapped_column(Float)
+    change_pct: Mapped[float] = mapped_column(Float)
+    recommendation: Mapped[str] = mapped_column(Text)
+    metadata_json: Mapped[dict] = mapped_column(JSONB, default=dict)
+
+    well: Mapped["Well"] = relationship(back_populates="anomalies")
+
+
+class ChatMessage(Base):
+    """Chat history."""
+    __tablename__ = "chat_messages"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    conversation_id: Mapped[str] = mapped_column(String(36), index=True)
+    role: Mapped[str] = mapped_column(String(10))  # user, assistant
+    content: Mapped[str] = mapped_column(Text)
+    map_context: Mapped[dict] = mapped_column(JSONB, default=dict)
+    tool_calls: Mapped[dict] = mapped_column(JSONB, default=dict)
+    model_used: Mapped[str] = mapped_column(String(50), default="")
+    tokens_used: Mapped[int] = mapped_column(Integer, default=0)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+
+class EvalResult(Base):
+    """Batch evaluation results."""
+    __tablename__ = "eval_results"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    run_id: Mapped[str] = mapped_column(String(36), index=True)
+    model: Mapped[str] = mapped_column(String(50))
+    test_case_id: Mapped[str] = mapped_column(String(50))
+    input_text: Mapped[str] = mapped_column(Text)
+    expected_output: Mapped[str] = mapped_column(Text, default="")
+    actual_output: Mapped[str] = mapped_column(Text)
+    accuracy_score: Mapped[float] = mapped_column(Float, default=0.0)
+    schema_valid: Mapped[bool] = mapped_column(Boolean, default=False)
+    latency_ms: Mapped[int] = mapped_column(Integer, default=0)
+    tokens_in: Mapped[int] = mapped_column(Integer, default=0)
+    tokens_out: Mapped[int] = mapped_column(Integer, default=0)
+    cost_usd: Mapped[float] = mapped_column(Float, default=0.0)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
+
+
+class LLMMetric(Base):
+    """Per-request LLM metrics for observability."""
+    __tablename__ = "llm_metrics"
+
+    id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
+    timestamp: Mapped[datetime] = mapped_column(DateTime, default=func.now(), index=True)
+    model: Mapped[str] = mapped_column(String(50), index=True)
+    task_type: Mapped[str] = mapped_column(String(30))
+    pool: Mapped[str] = mapped_column(String(10))  # pool-a, pool-b
+    latency_ms: Mapped[int] = mapped_column(Integer)
+    tokens_in: Mapped[int] = mapped_column(Integer)
+    tokens_out: Mapped[int] = mapped_column(Integer)
+    cost_usd: Mapped[float] = mapped_column(Float)
+    schema_valid: Mapped[bool] = mapped_column(Boolean)
+    was_fallback: Mapped[bool] = mapped_column(Boolean, default=False)
+```
+
+**Step 4: Create backend/db/seed.py**
+
+```python
+"""Seed database from generated GeoJSON and CSV files."""
+import json
+import pandas as pd
+from sqlalchemy.ext.asyncio import AsyncSession
+from geoalchemy2.shape import from_shape
+from shapely.geometry import shape
+from models.database import Well, Observation
+
+
+async def seed_wells(session: AsyncSession, geojson_path: str):
+    """Load wells from GeoJSON into database."""
+    with open(geojson_path) as f:
+        geojson = json.load(f)
+
+    for feature in geojson["features"]:
+        props = feature["properties"]
+        geom = shape(feature["geometry"])
+
+        well = Well(
+            id=props["id"],
+            name=props["name_en"],
+            cluster_id=props["cluster_id"],
+            cluster_name=props["cluster_name"],
+            geometry=from_shape(geom, srid=4326),
+            well_depth_m=props["well_depth_m"],
+            aquifer_type=props["aquifer_type"],
+            casing_diameter_mm=props["casing_diameter_mm"],
+            ground_elevation_m=props["ground_elevation_m"],
+            transmissivity_m2d=props["transmissivity_m2d"],
+            storativity=props["storativity"],
+            status=props["status"],
+            current_yield_ls=props["current_yield_ls"],
+            static_water_level_m=props["static_water_level_m"],
+            last_tds_mgl=props["last_tds_mgl"],
+            last_ph=props["last_ph"],
+            last_chloride_mgl=props["last_chloride_mgl"],
+            last_temperature_c=props["last_temperature_c"],
+            operator=props["operator"],
+            installation_date=props["installation_date"],
+            properties=props,
+        )
+        session.add(well)
+
+    await session.commit()
+
+
+async def seed_observations(session: AsyncSession, csv_dir: str, well_ids: list[str]):
+    """Load time series CSV files into database."""
+    for well_id in well_ids:
+        csv_path = f"{csv_dir}/{well_id}.csv"
+        df = pd.read_csv(csv_path, parse_dates=["timestamp"])
+
+        observations = [
+            Observation(
+                well_id=row["well_id"],
+                timestamp=row["timestamp"],
+                debit_ls=row["debit_ls"],
+                tds_mgl=row["tds_mgl"],
+                ph=row["ph"],
+                chloride_mgl=row["chloride_mgl"],
+                water_level_m=row["water_level_m"],
+                temperature_c=row["temperature_c"],
+            )
+            for _, row in df.iterrows()
+        ]
+        session.add_all(observations)
+
+    await session.commit()
+```
+
+**Step 5: Initialize Alembic**
+
+```bash
+cd backend
+alembic init db/migrations
+# Edit db/migrations/env.py for async support
+# Edit alembic.ini: sqlalchemy.url = postgresql+asyncpg://hydrowatch:hydrowatch_dev@localhost:5432/hydrowatch
+alembic revision --autogenerate -m "initial schema — wells, observations, anomalies, chat, eval"
+alembic upgrade head
+```
+
+**Step 6: Write tests**
+
+Test that Well model can be created, queried by bbox (PostGIS ST_Within), and that seed populates data correctly.
+
+**Step 7: Seed database**
+
+```bash
+docker compose up -d postgres          # start PostgreSQL
+alembic upgrade head                    # create tables
+python -m db.seed                       # load generated data
+```
+
+**Step 8: Commit**
+
+```bash
+git add backend/models/database.py backend/db/ docker-compose.yml
+git commit -m "feat: PostgreSQL + PostGIS — ORM models, async session, Alembic migrations, seed script"
 git push
 ```
 
