@@ -21,6 +21,7 @@ from services.llm_router import (
 )
 from services.tool_executor import ToolExecutor
 from models.tool_schemas import TOOL_DEFINITIONS
+from eval.metrics_api import router as metrics_router
 
 settings = get_settings()
 
@@ -55,6 +56,9 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# Metrics router
+app.include_router(metrics_router)
 
 # CORS
 app.add_middleware(
