@@ -9,7 +9,9 @@
 **Tech Stack:**
 - Backend: Python 3.12, FastAPI, LiteLLM, Instructor, Langfuse, DeepEval, Pydantic v2, numpy, scipy, pandas, geopandas, shapely, adtk
 - Frontend: Next.js 15, TypeScript, React, react-map-gl, MapLibre GL JS, Zustand, @turf/circle, @microsoft/fetch-event-source, Tailwind CSS
-- LLM: Gemini 2.5 Flash (free tier) via LiteLLM, Gemini Batch API for eval
+- LLM Pool A (simple/medium): Gemini 2.5 Flash ↔ Cerebras Llama 3.3 70B (mutual fallback via LiteLLM)
+- LLM Pool B (complex): Anthropic Haiku 4.5 (default) → Sonnet 4.5 (upgrade for reasoning)
+- Eval: Gemini Batch API (50% discount)
 - Map tiles: OpenFreeMap (free, no API key)
 - Deploy: Docker Compose (localhost demo)
 
@@ -221,10 +223,19 @@ from pydantic import SecretStr, Field
 
 
 class Settings(BaseSettings):
-    # LLM
+    # LLM Provider Keys
     gemini_api_key: SecretStr
-    default_model: str = "gemini/gemini-2.5-flash"
-    fallback_model: str = "gemini/gemini-2.5-pro"
+    cerebras_api_key: SecretStr
+    anthropic_api_key: SecretStr
+
+    # Model routing — Pool A (simple/medium, mutual fallback)
+    model_pool_a_primary: str = "gemini/gemini-2.5-flash"
+    model_pool_a_fallback: str = "cerebras/llama-3.3-70b"
+
+    # Model routing — Pool B (complex tasks)
+    model_pool_b_default: str = "anthropic/claude-haiku-4-5-20251001"
+    model_pool_b_complex: str = "anthropic/claude-sonnet-4-5-20250514"
+
     llm_temperature: float = 0.1
 
     # Server
@@ -965,10 +976,46 @@ TOOL_DEFINITIONS = [
 - Create: `backend/tests/test_context_bridge.py`
 
 `llm_router.py`:
-- Initialize LiteLLM with Gemini Flash (default) + Pro (fallback)
-- Instructor client for structured output
-- Model routing by task complexity
+- Two model pools via LiteLLM Router:
+  - **Pool A** (simple/medium tasks): Gemini 2.5 Flash (primary) ↔ Cerebras Llama 3.3 70B (fallback). Mutual fallback — if one is down, the other takes over.
+  - **Pool B** (complex tasks): Anthropic Haiku 4.5 (default) → Sonnet 4.5 (upgrade for deep reasoning/interpretation).
+- Task complexity classifier: determines which pool to use based on task type
+- Instructor client for structured output (works with all providers via LiteLLM)
 - Async streaming via `litellm.acompletion(stream=True)`
+- LiteLLM Router config:
+
+```python
+from litellm import Router
+
+router = Router(model_list=[
+    # Pool A — simple/medium (mutual fallback)
+    {"model_name": "pool-a", "litellm_params": {"model": "gemini/gemini-2.5-flash", "api_key": settings.gemini_api_key}},
+    {"model_name": "pool-a", "litellm_params": {"model": "cerebras/llama-3.3-70b", "api_key": settings.cerebras_api_key}},
+    # Pool B — complex
+    {"model_name": "pool-b", "litellm_params": {"model": "anthropic/claude-haiku-4-5-20251001", "api_key": settings.anthropic_api_key}},
+    {"model_name": "pool-b-upgrade", "litellm_params": {"model": "anthropic/claude-sonnet-4-5-20250514", "api_key": settings.anthropic_api_key}},
+])
+
+# Usage:
+# Simple task → router.acompletion(model="pool-a", ...)
+# Complex task → router.acompletion(model="pool-b", ...)
+# Deep reasoning → router.acompletion(model="pool-b-upgrade", ...)
+```
+
+- Task routing logic:
+
+```python
+TASK_ROUTING = {
+    "validate_csv":       "pool-a",   # structured, rule-based
+    "query_wells":        "pool-a",   # data retrieval
+    "get_region_stats":   "pool-a",   # aggregation
+    "get_well_history":   "pool-a",   # data + simple trend
+    "detect_anomalies":   "pool-b",   # needs reasoning
+    "interpret_anomaly":  "pool-b",   # domain knowledge
+    "calibration_advice": "pool-b-upgrade",  # complex reasoning
+    "general_question":   "pool-b",   # default for unknown
+}
+```
 
 `context_bridge.py`:
 - Takes MapContext from frontend
@@ -994,7 +1041,7 @@ def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
     return "\n".join(lines)
 ```
 
-**Commit:** `"feat: LLM router (Gemini Flash/Pro via LiteLLM) + context bridge (viewport → prompt)"`
+**Commit:** `"feat: LLM router (2 pools: Gemini↔Cerebras + Anthropic Haiku/Sonnet) + context bridge"`
 
 ---
 
