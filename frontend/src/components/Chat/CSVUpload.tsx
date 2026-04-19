@@ -80,7 +80,7 @@ export function CSVUpload() {
       )}
 
       {/* Result */}
-      {result && (
+      {result && !isUploading && (
         <div className="mt-3 p-3 bg-gray-50 rounded-lg text-xs">
           <div className="flex items-center gap-2 mb-2">
             <span className={`font-bold text-sm ${result.valid ? "text-green-600" : "text-red-600"}`}>

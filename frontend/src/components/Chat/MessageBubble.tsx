@@ -46,11 +46,28 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
               </div>
             );
           }
+          if (card.type === "region_stats") {
+            return (
+              <div key={i} className="mt-2 p-2 bg-white rounded border text-xs">
+                <div className="font-medium mb-1">Region: {card.well_count} wells ({card.active_count} active)</div>
+                <div className="text-gray-600">Avg debit: {card.avg_debit_ls} L/s &middot; Avg TDS: {card.avg_tds_mgl} mg/L</div>
+                {card.anomaly_count > 0 && <div className="text-red-600 mt-1">{card.anomaly_count} anomalies detected</div>}
+              </div>
+            );
+          }
+          if (card.type === "well_history") {
+            return (
+              <div key={i} className="mt-2 p-2 bg-white rounded border text-xs">
+                <div className="font-medium">{card.well_id}: {card.parameter}</div>
+                <div className="text-gray-600">Trend: {card.trend} &middot; {card.values.length} data points</div>
+              </div>
+            );
+          }
           return null;
         })}
 
         <span className="text-[10px] opacity-50 mt-1 block">
-          {message.timestamp.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+          {new Date(message.timestamp).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
         </span>
       </div>
     </div>

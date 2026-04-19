@@ -56,11 +56,21 @@ export function ChatPanel() {
       <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
         {messages.length === 0 && !streamingText && (
           <div className="text-center text-gray-400 text-sm mt-8">
-            <p className="mb-2">Ask about wells, anomalies, or upload CSV data.</p>
-            <div className="space-y-1 text-xs">
-              <p className="text-gray-300">Try: &quot;Show anomalies in the viewport&quot;</p>
-              <p className="text-gray-300">Try: &quot;What is the status of well AUH-01-003?&quot;</p>
-              <p className="text-gray-300">Try: &quot;Region statistics for visible area&quot;</p>
+            <p className="mb-3">Ask about wells, anomalies, or upload CSV data.</p>
+            <div className="space-y-2 text-xs">
+              {[
+                "Show anomalies in the viewport",
+                "What is the status of well AUH-01-003?",
+                "Region statistics for visible area",
+              ].map((suggestion) => (
+                <button
+                  key={suggestion}
+                  onClick={() => setInput(suggestion)}
+                  className="block mx-auto text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
+                >
+                  &rarr; {suggestion}
+                </button>
+              ))}
             </div>
           </div>
         )}
