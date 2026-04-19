@@ -55,8 +55,11 @@ def _ensure_wells_loaded():
 
 app = FastAPI(
     title="HydroWatch API",
-    description="AI-powered groundwater monitoring assistant",
+    description="AI-powered groundwater monitoring system for Abu Dhabi aquifer management. "
+                "Provides well monitoring, anomaly detection, and LLM-assisted analysis.",
     version="0.1.0",
+    docs_url="/docs",
+    redoc_url="/redoc",
     lifespan=lifespan,
 )
 
@@ -77,7 +80,7 @@ app.add_middleware(
 # Health
 # ---------------------------------------------------------------------------
 
-@app.get("/api/health")
+@app.get("/api/health", tags=["health"])
 async def health():
     _ensure_wells_loaded()
     return {
@@ -91,7 +94,7 @@ async def health():
 # Wells API
 # ---------------------------------------------------------------------------
 
-@app.get("/api/wells")
+@app.get("/api/wells", tags=["wells"])
 async def get_wells():
     """Return wells GeoJSON."""
     geojson_path = Path(settings.data_dir) / "wells.geojson"
@@ -99,7 +102,7 @@ async def get_wells():
         return json.load(f)
 
 
-@app.get("/api/wells/{well_id}/history")
+@app.get("/api/wells/{well_id}/history", tags=["wells"])
 async def get_well_history_endpoint(
     well_id: str,
     parameter: str = "debit_ls",
@@ -120,7 +123,7 @@ async def get_well_history_endpoint(
 # CSV Upload
 # ---------------------------------------------------------------------------
 
-@app.post("/api/upload/csv")
+@app.post("/api/upload/csv", tags=["upload"])
 async def upload_csv(file: UploadFile = File(...)):
     """Upload and validate a CSV file."""
     if not file.filename or not file.filename.endswith(".csv"):
@@ -173,7 +176,7 @@ def _classify_task(message: str) -> str:
     return "general_question"
 
 
-@app.post("/api/chat/stream")
+@app.post("/api/chat/stream", tags=["chat"])
 async def chat_stream(request: ChatRequest):
     """SSE streaming chat endpoint with tool calling."""
 
