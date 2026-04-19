@@ -1390,7 +1390,212 @@ def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
 
 ---
 
-### Task 9: FastAPI main app with SSE streaming
+### Task 9.5: Prompt Engine — multi-level prompt architecture
+
+**IMPORTANT: This task REPLACES the simple SYSTEM_PROMPT in llm_router.py with a proper prompt engineering system.**
+
+**Problem with current approach:**
+1. Single flat prompt "You are HydroWatch AI..." — no domain depth, LLM doesn't truly understand the project
+2. Same prompt for all models — Gemini Flash, Cerebras Llama, and Anthropic Haiku/Sonnet have different strengths and need different instruction styles
+3. No hierarchical context — LLM has no "memory" about the project, region, norms, history
+
+**Solution: 3-level prompt hierarchy + model-specific adaptors + task-specific instructions**
+
+**Files:**
+- Create: `backend/services/prompt_engine.py`
+- Create: `backend/prompts/` directory with prompt modules
+- Create: `backend/prompts/base_role.py`
+- Create: `backend/prompts/domain_knowledge.py`
+- Create: `backend/prompts/model_adaptors.py`
+- Create: `backend/prompts/task_instructions.py`
+- Create: `backend/prompts/output_formats.py`
+- Modify: `backend/services/llm_router.py` — use PromptEngine instead of flat SYSTEM_PROMPT
+- Create: `backend/tests/test_prompt_engine.py`
+
+**Architecture:**
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    PROMPT ENGINE                             │
+│                                                              │
+│  Final prompt = Level 0 (base role)                         │
+│               + Level 1 (domain knowledge)                  │
+│               + Model adaptor (per provider)                │
+│               + Task instructions (per task type)           │
+│               + Output format (per response type)           │
+│               + Level 2 (context bridge — runtime)          │
+│                                                              │
+│  ┌──────────────────────────────────────────────────────┐   │
+│  │ Level 0: BASE ROLE (always present, ~200 tokens)     │   │
+│  │                                                      │   │
+│  │ Identity, mission, core rules, safety constraints    │   │
+│  │ "You are HydroWatch AI, a specialized groundwater    │   │
+│  │  monitoring system for strategic water reserves..."   │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐   │
+│  │ Level 1: DOMAIN KNOWLEDGE (~500-800 tokens)         │   │
+│  │                                                      │   │
+│  │ Regional context:                                    │   │
+│  │ - Abu Dhabi aquifer system (Dammam, Umm Er Radhuma) │   │
+│  │ - Water quality norms (UAE drinking water standards) │   │
+│  │ - Typical parameters and realistic ranges           │   │
+│  │ - Known cluster locations and characteristics       │   │
+│  │                                                      │   │
+│  │ Operational context:                                 │   │
+│  │ - Current well inventory (25 wells, 4 clusters)     │   │
+│  │ - Known anomalies count and types                   │   │
+│  │ - Monitoring frequency (4x/day)                     │   │
+│  │                                                      │   │
+│  │ This simulates what a fine-tuned model would "know" │   │
+│  │ natively — we provide it as context instead          │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐   │
+│  │ MODEL ADAPTOR (per provider, ~100-200 tokens)       │   │
+│  │                                                      │   │
+│  │ gemini_flash:                                        │   │
+│  │   - Concise instructions, explicit JSON examples     │   │
+│  │   - "Respond in under 150 words unless detailed      │   │
+│  │     analysis is requested"                           │   │
+│  │                                                      │   │
+│  │ cerebras_llama:                                      │   │
+│  │   - Very explicit format instructions                │   │
+│  │   - Simpler vocabulary in system prompt              │   │
+│  │   - More few-shot examples for structured output     │   │
+│  │                                                      │   │
+│  │ anthropic_haiku:                                     │   │
+│  │   - Permission for chain-of-thought reasoning        │   │
+│  │   - "Think step by step before concluding"           │   │
+│  │   - Domain-expert tone                               │   │
+│  │                                                      │   │
+│  │ anthropic_sonnet:                                    │   │
+│  │   - Full reasoning freedom                           │   │
+│  │   - "Provide comprehensive analysis with evidence"   │   │
+│  │   - Permission for longer responses                  │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐   │
+│  │ TASK INSTRUCTIONS (per task type, ~100-300 tokens)   │   │
+│  │                                                      │   │
+│  │ validate_csv:                                        │   │
+│  │   "Focus on data quality. Check units, ranges,       │   │
+│  │    missing values. Flag but don't interpret."        │   │
+│  │                                                      │   │
+│  │ detect_anomalies:                                    │   │
+│  │   "Analyze results critically. Consider: is this a   │   │
+│  │    real anomaly or seasonal variation? Check          │   │
+│  │    neighboring wells for corroboration."             │   │
+│  │                                                      │   │
+│  │ interpret_anomaly:                                   │   │
+│  │   "Provide root cause analysis. Consider geological  │   │
+│  │    factors, pumping history, interference. Give       │   │
+│  │    actionable recommendations with priority."        │   │
+│  │                                                      │   │
+│  │ general_question:                                    │   │
+│  │   "Answer based on available data and tools.         │   │
+│  │    Always cite well IDs and specific values."        │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐   │
+│  │ OUTPUT FORMAT (per response type, ~50-100 tokens)    │   │
+│  │                                                      │   │
+│  │ text_response:                                       │   │
+│  │   "Respond in markdown. Use well IDs. Include        │   │
+│  │    specific values with units."                      │   │
+│  │                                                      │   │
+│  │ anomaly_card:                                        │   │
+│  │   "Return JSON matching AnomalyCard schema:          │   │
+│  │    {severity, well_id, anomaly_type, title, ...}"    │   │
+│  │                                                      │   │
+│  │ validation_card:                                     │   │
+│  │   "Return JSON matching ValidationResult schema"     │   │
+│  └──────────────────────────────────────────────────────┘   │
+│                         │                                    │
+│  ┌──────────────────────▼──────────────────────────────┐   │
+│  │ Level 2: CONTEXT BRIDGE (runtime, variable tokens)  │   │
+│  │                                                      │   │
+│  │ ## Current Map State                                 │   │
+│  │ - Center, zoom, bbox, layers, selected well          │   │
+│  │ - (from context_bridge.py — already implemented)     │   │
+│  └──────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Implementation:**
+
+```python
+# backend/services/prompt_engine.py
+
+class PromptEngine:
+    """Multi-level prompt assembly with model-specific adaptors."""
+
+    def build(
+        self,
+        model_pool: str,          # "pool-a" | "pool-b" | "pool-b-upgrade"
+        task_type: str,           # "validate_csv" | "detect_anomalies" | ...
+        context_section: str,     # from context_bridge.py
+        output_type: str = "text_response",
+    ) -> str:
+        """Assemble final system prompt from components."""
+        parts = [
+            self._get_base_role(),
+            self._get_domain_knowledge(),
+            self._get_model_adaptor(model_pool),
+            self._get_task_instructions(task_type),
+            self._get_output_format(output_type),
+            context_section,
+        ]
+        return "\n\n".join(part for part in parts if part)
+```
+
+**Key design decisions:**
+
+1. **Domain knowledge simulates fine-tuning.** In production they have custom fine-tuned models. We simulate this by injecting domain knowledge as context. On the interview say: "In production you'd fine-tune the model on this domain knowledge. For the demo I inject it as Level 1 context — same effect, faster iteration."
+
+2. **Model adaptors account for provider differences.** Gemini Flash works best with concise, structured prompts. Anthropic Sonnet benefits from chain-of-thought permission. Llama needs more explicit format examples. Each gets tailored instructions.
+
+3. **Task instructions prevent "general assistant" behavior.** When detecting anomalies, the model should think like a hydrogeologist. When validating CSV, it should think like a data engineer. Different mindsets for different tasks.
+
+4. **Output formats ensure schema compliance.** Each response type has explicit JSON schema examples in the prompt, reducing structured output failures.
+
+**Domain knowledge content (Level 1) should include:**
+
+```markdown
+## Abu Dhabi Aquifer System
+- Dammam Formation: limestone, 80-200m depth, T=200-1200 m²/day, good water quality
+- Umm Er Radhuma: deep limestone, 150-350m, T=100-800, often brackish
+- Quaternary Sand: shallow, 30-80m, variable quality
+- Alluvial: very shallow, 20-60m, limited yield
+
+## Water Quality Standards (UAE)
+- Drinking water TDS limit: 1,000 mg/L (most wells exceed this — brackish)
+- Emergency supply TDS limit: 1,500 mg/L
+- Chloride limit: 250 mg/L (drinking), 600 mg/L (emergency)
+- pH acceptable range: 6.5-8.5
+- Alert thresholds: TDS > 5,000, pH outside 7.0-8.5, debit decline > 15%
+
+## Monitoring Network
+- 25 wells in 4 clusters: Al Wathba, Mussafah, Sweihan, Al Khatim
+- Measurement frequency: every 6 hours (4/day)
+- Parameters: debit, TDS, pH, chlorides, water level, temperature
+- Known issues: general aquifer depletion trend, seasonal TDS variation
+
+## Anomaly Interpretation Guidelines
+- Debit decline > 15%: possible clogging, aquifer depletion, or casing damage
+- TDS spike > 50% above baseline: possible contamination or saltwater intrusion
+- Sensor reading = 0 for > 5 consecutive readings: likely sensor malfunction
+- Correlated drawdown in neighboring wells: interference — adjust pumping schedule
+- Depression cone radius > 2km: excessive pumping, consider reducing rates
+```
+
+**Test: verify prompt assembly produces different prompts for different models/tasks.**
+
+**Commit:** `"feat: prompt engine — 3-level hierarchy, model adaptors, task-specific instructions, domain knowledge"`
+
+---
+
+### Task 10: FastAPI main app with SSE streaming (was Task 9)
 
 **Files:**
 - Create: `backend/main.py`
