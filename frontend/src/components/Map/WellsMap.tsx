@@ -67,31 +67,25 @@ export function WellsMap() {
     const { latitude: lat, longitude: lng, zoom: z } = evt.viewState;
     setViewport(lat, lng, z);
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const map = evt.target as any;
+    const map = (evt as unknown as { target: { getBounds(): { getWest(): number; getSouth(): number; getEast(): number; getNorth(): number } } }).target;
     if (map?.getBounds) {
       const b = map.getBounds();
       setBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
     }
   }, [setViewport, setBounds]);
 
-  const onWellClick = useCallback((evt: MapLayerMouseEvent) => {
-    const feature = evt.features?.[0];
-    if (!feature || !feature.properties) return;
-
-    const props = feature.properties as unknown as WellProperties;
-    const coords = (feature.geometry as GeoJSON.Point).coordinates;
-
-    selectWell(props.id, props);
-    setPopupWell({
-      properties: props,
-      longitude: coords[0],
-      latitude: coords[1],
-    });
-  }, [selectWell]);
-
   const onMapClick = useCallback((evt: MapLayerMouseEvent) => {
-    if (!evt.features?.length) {
+    const feature = evt.features?.[0];
+    if (feature && feature.properties) {
+      const props = feature.properties as unknown as WellProperties;
+      const coords = (feature.geometry as GeoJSON.Point).coordinates;
+      selectWell(props.id, props);
+      setPopupWell({
+        properties: props,
+        longitude: coords[0],
+        latitude: coords[1],
+      });
+    } else {
       selectWell(null);
       setPopupWell(null);
     }
@@ -104,14 +98,7 @@ export function WellsMap() {
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE}
         onMoveEnd={onMoveEnd}
-        onClick={(evt) => {
-          // Check if clicked on a well
-          if (evt.features?.length) {
-            onWellClick(evt);
-          } else {
-            onMapClick(evt);
-          }
-        }}
+        onClick={onMapClick}
         interactiveLayerIds={["wells-circle"]}
         cursor="pointer"
       >
