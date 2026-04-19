@@ -1,0 +1,780 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.6992,
+          24.426094
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-001",
+        "name_en": "Al Wathba Well 1",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 289.5,
+        "aquifer_type": "Umm Er Radhuma",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 79.0,
+        "transmissivity_m2d": 165.9,
+        "storativity": 0.0049,
+        "status": "active",
+        "current_yield_ls": 24.01,
+        "static_water_level_m": 65.7,
+        "last_tds_mgl": 2769.0,
+        "last_ph": 7.68,
+        "last_chloride_mgl": 2043.0,
+        "last_temperature_c": 37.3,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2010-06-13"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.700822,
+          24.427375
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-002",
+        "name_en": "Al Wathba Well 2",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 179.3,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 10.0,
+        "transmissivity_m2d": 831.7,
+        "storativity": 0.00655,
+        "status": "active",
+        "current_yield_ls": 29.18,
+        "static_water_level_m": 41.3,
+        "last_tds_mgl": 7359.0,
+        "last_ph": 8.17,
+        "last_chloride_mgl": 1215.0,
+        "last_temperature_c": 32.7,
+        "operator": "Al Ain Distribution Company",
+        "installation_date": "2014-12-21"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.709755,
+          24.411872
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-003",
+        "name_en": "Al Wathba Well 3",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 38.8,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 200,
+        "ground_elevation_m": 40.9,
+        "transmissivity_m2d": 81.2,
+        "storativity": 0.06299,
+        "status": "inactive",
+        "current_yield_ls": 8.35,
+        "static_water_level_m": 48.5,
+        "last_tds_mgl": 6019.0,
+        "last_ph": 7.66,
+        "last_chloride_mgl": 4214.0,
+        "last_temperature_c": 35.0,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2007-10-24"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.737429,
+          24.424374
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-004",
+        "name_en": "Al Wathba Well 4",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 178.0,
+        "aquifer_type": "Umm Er Radhuma",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 21.1,
+        "transmissivity_m2d": 239.9,
+        "storativity": 0.00103,
+        "status": "active",
+        "current_yield_ls": 20.62,
+        "static_water_level_m": 67.2,
+        "last_tds_mgl": 6231.0,
+        "last_ph": 8.17,
+        "last_chloride_mgl": 2457.0,
+        "last_temperature_c": 33.7,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2013-08-14"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.713302,
+          24.386343
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-005",
+        "name_en": "Al Wathba Well 5",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 57.7,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 11.7,
+        "transmissivity_m2d": 245.7,
+        "storativity": 0.02216,
+        "status": "maintenance",
+        "current_yield_ls": 14.23,
+        "static_water_level_m": 21.8,
+        "last_tds_mgl": 3288.0,
+        "last_ph": 7.61,
+        "last_chloride_mgl": 4311.0,
+        "last_temperature_c": 30.3,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2020-04-13"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.723171,
+          24.411455
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-006",
+        "name_en": "Al Wathba Well 6",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 63.2,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 62.6,
+        "transmissivity_m2d": 192.2,
+        "storativity": 0.04256,
+        "status": "active",
+        "current_yield_ls": 2.64,
+        "static_water_level_m": 30.0,
+        "last_tds_mgl": 2540.0,
+        "last_ph": 8.08,
+        "last_chloride_mgl": 2471.0,
+        "last_temperature_c": 29.6,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2014-06-13"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.711534,
+          24.41803
+        ]
+      },
+      "properties": {
+        "id": "AUH-01-007",
+        "name_en": "Al Wathba Well 7",
+        "cluster_id": "AL_WATHBA",
+        "cluster_name": "Al Wathba",
+        "well_depth_m": 48.1,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 87.4,
+        "transmissivity_m2d": 80.7,
+        "storativity": 0.01472,
+        "status": "inactive",
+        "current_yield_ls": 27.44,
+        "static_water_level_m": 77.7,
+        "last_tds_mgl": 6198.0,
+        "last_ph": 7.4,
+        "last_chloride_mgl": 4855.0,
+        "last_temperature_c": 35.8,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2015-04-03"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.511204,
+          24.34548
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-001",
+        "name_en": "Mussafah Industrial Well 1",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 104.3,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 72.2,
+        "transmissivity_m2d": 506.0,
+        "storativity": 0.00548,
+        "status": "active",
+        "current_yield_ls": 25.99,
+        "static_water_level_m": 30.6,
+        "last_tds_mgl": 6551.0,
+        "last_ph": 8.08,
+        "last_chloride_mgl": 2331.0,
+        "last_temperature_c": 34.3,
+        "operator": "Al Ain Distribution Company",
+        "installation_date": "1997-10-12"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.518123,
+          24.352933
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-002",
+        "name_en": "Mussafah Industrial Well 2",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 97.3,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 200,
+        "ground_elevation_m": 115.2,
+        "transmissivity_m2d": 303.4,
+        "storativity": 0.00553,
+        "status": "active",
+        "current_yield_ls": 27.9,
+        "static_water_level_m": 30.2,
+        "last_tds_mgl": 5486.0,
+        "last_ph": 7.52,
+        "last_chloride_mgl": 3077.0,
+        "last_temperature_c": 28.2,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2008-10-02"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.538851,
+          24.376623
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-003",
+        "name_en": "Mussafah Industrial Well 3",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 192.5,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 108.1,
+        "transmissivity_m2d": 771.7,
+        "storativity": 0.00484,
+        "status": "active",
+        "current_yield_ls": 11.28,
+        "static_water_level_m": 36.0,
+        "last_tds_mgl": 5124.0,
+        "last_ph": 7.66,
+        "last_chloride_mgl": 402.0,
+        "last_temperature_c": 36.3,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2010-04-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.499283,
+          24.343516
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-004",
+        "name_en": "Mussafah Industrial Well 4",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 68.4,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 41.5,
+        "transmissivity_m2d": 87.7,
+        "storativity": 0.04664,
+        "status": "active",
+        "current_yield_ls": 3.05,
+        "static_water_level_m": 33.8,
+        "last_tds_mgl": 5329.0,
+        "last_ph": 7.56,
+        "last_chloride_mgl": 4200.0,
+        "last_temperature_c": 36.1,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2012-04-18"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.491269,
+          24.349456
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-005",
+        "name_en": "Mussafah Industrial Well 5",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 38.2,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 41.3,
+        "transmissivity_m2d": 65.7,
+        "storativity": 0.0274,
+        "status": "inactive",
+        "current_yield_ls": 26.97,
+        "static_water_level_m": 79.5,
+        "last_tds_mgl": 6492.0,
+        "last_ph": 8.34,
+        "last_chloride_mgl": 4499.0,
+        "last_temperature_c": 33.2,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2013-05-11"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          54.520477,
+          24.355717
+        ]
+      },
+      "properties": {
+        "id": "AUH-02-006",
+        "name_en": "Mussafah Industrial Well 6",
+        "cluster_id": "MUSSAFAH",
+        "cluster_name": "Mussafah Industrial",
+        "well_depth_m": 337.4,
+        "aquifer_type": "Umm Er Radhuma",
+        "casing_diameter_mm": 200,
+        "ground_elevation_m": 40.7,
+        "transmissivity_m2d": 268.7,
+        "storativity": 0.00149,
+        "status": "maintenance",
+        "current_yield_ls": 6.29,
+        "static_water_level_m": 69.9,
+        "last_tds_mgl": 3076.0,
+        "last_ph": 7.9,
+        "last_chloride_mgl": 4410.0,
+        "last_temperature_c": 30.0,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2003-12-14"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.359002,
+          24.475642
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-001",
+        "name_en": "Sweihan Well 1",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 41.5,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 87.3,
+        "transmissivity_m2d": 96.1,
+        "storativity": 0.03711,
+        "status": "inactive",
+        "current_yield_ls": 16.18,
+        "static_water_level_m": 27.3,
+        "last_tds_mgl": 6166.0,
+        "last_ph": 7.87,
+        "last_chloride_mgl": 1239.0,
+        "last_temperature_c": 36.0,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "1998-06-04"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.337089,
+          24.493027
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-002",
+        "name_en": "Sweihan Well 2",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 39.5,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 200,
+        "ground_elevation_m": 21.1,
+        "transmissivity_m2d": 209.0,
+        "storativity": 0.14556,
+        "status": "inactive",
+        "current_yield_ls": 27.89,
+        "static_water_level_m": 37.2,
+        "last_tds_mgl": 2149.0,
+        "last_ph": 7.83,
+        "last_chloride_mgl": 3280.0,
+        "last_temperature_c": 29.1,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "1995-12-05"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.342336,
+          24.457247
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-003",
+        "name_en": "Sweihan Well 3",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 53.4,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 104.8,
+        "transmissivity_m2d": 324.7,
+        "storativity": 0.01071,
+        "status": "active",
+        "current_yield_ls": 25.22,
+        "static_water_level_m": 26.5,
+        "last_tds_mgl": 6781.0,
+        "last_ph": 7.35,
+        "last_chloride_mgl": 2795.0,
+        "last_temperature_c": 34.1,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2006-02-11"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.347486,
+          24.50997
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-004",
+        "name_en": "Sweihan Well 4",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 38.2,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 99.8,
+        "transmissivity_m2d": 96.9,
+        "storativity": 0.07367,
+        "status": "active",
+        "current_yield_ls": 24.86,
+        "static_water_level_m": 64.8,
+        "last_tds_mgl": 2632.0,
+        "last_ph": 7.1,
+        "last_chloride_mgl": 3094.0,
+        "last_temperature_c": 29.5,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2020-02-26"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.339969,
+          24.491594
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-005",
+        "name_en": "Sweihan Well 5",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 26.1,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 41.6,
+        "transmissivity_m2d": 61.2,
+        "storativity": 0.05211,
+        "status": "active",
+        "current_yield_ls": 6.89,
+        "static_water_level_m": 23.3,
+        "last_tds_mgl": 2320.0,
+        "last_ph": 7.89,
+        "last_chloride_mgl": 3499.0,
+        "last_temperature_c": 31.9,
+        "operator": "Al Ain Distribution Company",
+        "installation_date": "2019-10-24"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.347406,
+          24.48844
+        ]
+      },
+      "properties": {
+        "id": "AUH-03-006",
+        "name_en": "Sweihan Well 6",
+        "cluster_id": "SWEIHAN",
+        "cluster_name": "Sweihan",
+        "well_depth_m": 148.5,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 16.4,
+        "transmissivity_m2d": 616.3,
+        "storativity": 0.0023,
+        "status": "maintenance",
+        "current_yield_ls": 16.67,
+        "static_water_level_m": 42.4,
+        "last_tds_mgl": 2610.0,
+        "last_ph": 8.25,
+        "last_chloride_mgl": 544.0,
+        "last_temperature_c": 37.2,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2017-11-07"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.106153,
+          24.268998
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-001",
+        "name_en": "Al Khatim Well 1",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 45.7,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 150,
+        "ground_elevation_m": 35.6,
+        "transmissivity_m2d": 240.3,
+        "storativity": 0.06346,
+        "status": "active",
+        "current_yield_ls": 16.4,
+        "static_water_level_m": 52.2,
+        "last_tds_mgl": 7145.0,
+        "last_ph": 7.69,
+        "last_chloride_mgl": 2110.0,
+        "last_temperature_c": 34.4,
+        "operator": "Emirates Water & Electricity",
+        "installation_date": "2008-02-12"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.06421,
+          24.320305
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-002",
+        "name_en": "Al Khatim Well 2",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 46.4,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 200,
+        "ground_elevation_m": 102.6,
+        "transmissivity_m2d": 182.8,
+        "storativity": 0.03743,
+        "status": "active",
+        "current_yield_ls": 28.57,
+        "static_water_level_m": 37.8,
+        "last_tds_mgl": 7498.0,
+        "last_ph": 7.72,
+        "last_chloride_mgl": 1843.0,
+        "last_temperature_c": 33.4,
+        "operator": "Al Ain Distribution Company",
+        "installation_date": "2000-10-16"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.083727,
+          24.281553
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-003",
+        "name_en": "Al Khatim Well 3",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 66.7,
+        "aquifer_type": "Quaternary Sand",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 112.6,
+        "transmissivity_m2d": 120.8,
+        "storativity": 0.03779,
+        "status": "active",
+        "current_yield_ls": 5.7,
+        "static_water_level_m": 71.6,
+        "last_tds_mgl": 5686.0,
+        "last_ph": 7.14,
+        "last_chloride_mgl": 3711.0,
+        "last_temperature_c": 28.8,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2021-03-23"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.114876,
+          24.315262
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-004",
+        "name_en": "Al Khatim Well 4",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 57.8,
+        "aquifer_type": "Alluvial",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 65.1,
+        "transmissivity_m2d": 98.4,
+        "storativity": 0.10901,
+        "status": "inactive",
+        "current_yield_ls": 19.25,
+        "static_water_level_m": 25.7,
+        "last_tds_mgl": 3028.0,
+        "last_ph": 7.85,
+        "last_chloride_mgl": 2990.0,
+        "last_temperature_c": 32.7,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2020-10-15"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.086208,
+          24.231858
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-005",
+        "name_en": "Al Khatim Well 5",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 173.9,
+        "aquifer_type": "Umm Er Radhuma",
+        "casing_diameter_mm": 250,
+        "ground_elevation_m": 92.7,
+        "transmissivity_m2d": 182.0,
+        "storativity": 0.00135,
+        "status": "active",
+        "current_yield_ls": 13.72,
+        "static_water_level_m": 59.5,
+        "last_tds_mgl": 6646.0,
+        "last_ph": 8.01,
+        "last_chloride_mgl": 1868.0,
+        "last_temperature_c": 37.0,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2005-07-09"
+      }
+    },
+    {
+      "type": "Feature",
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          55.108946,
+          24.276441
+        ]
+      },
+      "properties": {
+        "id": "AUH-04-006",
+        "name_en": "Al Khatim Well 6",
+        "cluster_id": "AL_KHATIM",
+        "cluster_name": "Al Khatim",
+        "well_depth_m": 132.5,
+        "aquifer_type": "Dammam Limestone",
+        "casing_diameter_mm": 300,
+        "ground_elevation_m": 87.5,
+        "transmissivity_m2d": 583.3,
+        "storativity": 0.00638,
+        "status": "maintenance",
+        "current_yield_ls": 28.21,
+        "static_water_level_m": 53.2,
+        "last_tds_mgl": 6682.0,
+        "last_ph": 7.72,
+        "last_chloride_mgl": 2069.0,
+        "last_temperature_c": 37.9,
+        "operator": "Abu Dhabi Agriculture Authority",
+        "installation_date": "2006-02-08"
+      }
+    }
+  ]
+}

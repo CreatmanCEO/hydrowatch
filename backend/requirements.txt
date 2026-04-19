@@ -6,6 +6,10 @@ litellm==1.83.10
 instructor[google-genai]==1.15.1
 langfuse==4.3.1
 deepeval==3.9.7
+sqlalchemy[asyncio]==2.0.40
+alembic==1.15.2
+asyncpg==0.30.0
+geoalchemy2==0.17.1
 numpy==2.2.5
 scipy==1.15.3
 pandas==2.2.3

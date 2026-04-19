@@ -19,6 +19,9 @@ class Settings(BaseSettings):
 
     llm_temperature: float = 0.1
 
+    # Database
+    database_url: str = "postgresql+asyncpg://hydrowatch:hydrowatch_dev@localhost:5432/hydrowatch"
+
     # Server
     host: str = "0.0.0.0"
     port: int = 8000
