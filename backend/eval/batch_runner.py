@@ -1,7 +1,12 @@
-"""Gemini Batch API pipeline for model evaluation.
+"""Model evaluation pipeline.
 
 Runs eval_dataset.jsonl against multiple models, collects responses,
 and computes comparison metrics.
+
+NOTE: Current implementation uses sequential API calls for simplicity.
+Production optimization: use Gemini Batch API (google.genai.Client.batches.create)
+for 50% cost reduction and parallel processing.
+See: https://ai.google.dev/gemini-api/docs/batch-api
 """
 import asyncio
 import json
@@ -82,9 +87,11 @@ async def run_single_case(
     error = None
     tokens_in = 0
     tokens_out = 0
+    llm_response = None
 
     try:
-        response = await litellm.acompletion(
+        # Direct call (not via Router) — eval targets specific model, not pool
+        llm_response = await litellm.acompletion(
             model=model,
             messages=messages,
             tools=TOOL_DEFINITIONS,
@@ -95,12 +102,12 @@ async def run_single_case(
         latency_ms = int((time.time() - start_time) * 1000)
 
         # Extract usage
-        if response.usage:
-            tokens_in = response.usage.prompt_tokens or 0
-            tokens_out = response.usage.completion_tokens or 0
+        if llm_response.usage:
+            tokens_in = llm_response.usage.prompt_tokens or 0
+            tokens_out = llm_response.usage.completion_tokens or 0
 
         # Extract tool calls
-        choice = response.choices[0]
+        choice = llm_response.choices[0]
         if choice.message.tool_calls:
             for tc in choice.message.tool_calls:
                 tool_call_info = {
@@ -137,8 +144,8 @@ async def run_single_case(
 
     fields_present = check_fields_present(case.get("expected_fields", []), output)
 
-    # Estimate cost (simplified)
-    cost_usd = estimate_cost(model, tokens_in, tokens_out)
+    # Estimate cost (LiteLLM first, manual fallback)
+    cost_usd = estimate_cost(model, tokens_in, tokens_out, response=llm_response)
 
     return EvalResult(
         case_id=case["id"],
@@ -158,9 +165,17 @@ async def run_single_case(
     )
 
 
-def estimate_cost(model: str, tokens_in: int, tokens_out: int) -> float:
-    """Estimate cost per request based on model pricing."""
-    # Approximate pricing (USD per 1M tokens)
+def estimate_cost(model: str, tokens_in: int, tokens_out: int, response=None) -> float:
+    """Estimate cost per request. Uses LiteLLM cost estimation if available, falls back to manual pricing."""
+    if response:
+        try:
+            cost = litellm.completion_cost(completion_response=response)
+            if cost and cost > 0:
+                return round(cost, 6)
+        except Exception:
+            pass
+
+    # Fallback: manual approximate pricing (USD per 1M tokens)
     pricing = {
         "gemini/gemini-2.5-flash": {"input": 0.15, "output": 0.60},
         "gemini/gemini-2.5-pro": {"input": 1.25, "output": 5.00},
