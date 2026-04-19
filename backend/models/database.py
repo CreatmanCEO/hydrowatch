@@ -52,8 +52,8 @@ class Well(Base):
     properties: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     # Relationships
-    observations: Mapped[list["Observation"]] = relationship(back_populates="well")
-    anomalies: Mapped[list["Anomaly"]] = relationship(back_populates="well")
+    observations: Mapped[list["Observation"]] = relationship(back_populates="well", cascade="all, delete-orphan")
+    anomalies: Mapped[list["Anomaly"]] = relationship(back_populates="well", cascade="all, delete-orphan")
 
     # Spatial index
     __table_args__ = (
@@ -66,7 +66,7 @@ class Observation(Base):
     __tablename__ = "observations"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id"), index=True)
+    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id", ondelete="CASCADE"), index=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime, index=True)
 
     debit_ls: Mapped[float] = mapped_column(Float)
@@ -88,7 +88,7 @@ class Anomaly(Base):
     __tablename__ = "anomalies"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id"), index=True)
+    well_id: Mapped[str] = mapped_column(ForeignKey("wells.id", ondelete="CASCADE"), index=True)
     detected_at: Mapped[datetime] = mapped_column(DateTime, default=func.now())
 
     anomaly_type: Mapped[str] = mapped_column(String(30))

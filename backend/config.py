@@ -1,4 +1,5 @@
 """Application configuration via environment variables."""
+from pathlib import Path
 from pydantic_settings import BaseSettings
 from pydantic import SecretStr, Field
 
@@ -27,8 +28,8 @@ class Settings(BaseSettings):
     port: int = 8000
     cors_origins: list[str] = ["http://localhost:3000"]
 
-    # Data
-    data_dir: str = "./data"
+    # Data — resolved relative to backend/ directory
+    data_dir: str = str(Path(__file__).resolve().parent.parent / "data")
     max_csv_size_mb: int = 10
 
     # Langfuse (optional)

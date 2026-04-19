@@ -49,6 +49,9 @@ def validate_csv(
 
     total_rows = len(df)
 
+    if total_rows == 0:
+        errors.append("CSV file is empty (0 data rows)")
+
     # Check columns
     missing_cols = set(expected_columns) - set(df.columns)
     if missing_cols:

@@ -24,6 +24,7 @@ class PromptEngine:
         task_type: str,
         context_section: str,
         output_type: str = "text_response",
+        model_name: str = "",
     ) -> str:
         """
         Assemble final system prompt from components.
@@ -33,6 +34,7 @@ class PromptEngine:
             task_type: "validate_csv" | "detect_anomalies" | "general_question" | ...
             context_section: runtime context from context_bridge.py
             output_type: "text_response" | "anomaly_card" | "validation_card" | "region_stats"
+            model_name: actual model name (e.g., "cerebras/llama-3.3-70b") for adaptor selection
 
         Returns:
             Complete system prompt string.
@@ -40,7 +42,7 @@ class PromptEngine:
         parts = [
             BASE_ROLE,
             DOMAIN_KNOWLEDGE,
-            get_model_adaptor(model_pool),
+            get_model_adaptor(model_pool, model_name),
             get_task_instructions(task_type),
             get_output_format(output_type),
             context_section,

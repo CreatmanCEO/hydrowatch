@@ -1,21 +1,26 @@
 """Seed database from generated GeoJSON and CSV files."""
 import asyncio
 import json
-import sys
 from pathlib import Path
 
 import pandas as pd
+from sqlalchemy import delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2.shape import from_shape
 from shapely.geometry import shape
 
 from models.database import Base, Well, Observation
-from db.session import engine, async_session
+from db.session import get_engine, get_session_factory
 
 
 async def seed_wells(session: AsyncSession, geojson_path: str):
-    """Load wells from GeoJSON into database."""
-    with open(geojson_path) as f:
+    """Load wells from GeoJSON into database (truncate + insert)."""
+    # Truncate existing data to allow re-seeding
+    await session.execute(delete(Observation))
+    await session.execute(delete(Well))
+    await session.flush()
+
+    with open(geojson_path, encoding="utf-8") as f:
         geojson = json.load(f)
 
     for feature in geojson["features"]:
@@ -84,6 +89,7 @@ async def seed_observations(session: AsyncSession, csv_dir: str, well_ids: list[
 
 async def create_tables():
     """Create all tables."""
+    engine = get_engine()
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     print("Tables created")
@@ -97,10 +103,10 @@ async def main():
 
     await create_tables()
 
-    async with async_session() as session:
+    async with get_session_factory()() as session:
         await seed_wells(session, str(geojson_path))
 
-        with open(geojson_path) as f:
+        with open(geojson_path, encoding="utf-8") as f:
             geojson = json.load(f)
         well_ids = [f["properties"]["id"] for f in geojson["features"]]
 
@@ -109,7 +115,7 @@ async def main():
         else:
             print("No observation CSVs found, skipping observations seed")
 
-    await engine.dispose()
+    await get_engine().dispose()
     print("Seed complete!")
 
 

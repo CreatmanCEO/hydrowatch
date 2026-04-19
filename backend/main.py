@@ -25,6 +25,9 @@ from eval.metrics_api import router as metrics_router
 
 settings = get_settings()
 
+# Sync DATA_DIR env var so tools use the same path as config
+os.environ["DATA_DIR"] = settings.data_dir
+
 # Singletons
 tool_executor = ToolExecutor()
 wells_data: dict = {}
@@ -207,10 +210,14 @@ async def chat_stream(request: ChatRequest):
             # Fallback: no LLM available, use tools directly
             yield f"data: {json.dumps({'type': 'token', 'content': 'LLM not configured. Running tool directly...'})}\n\n"
 
-            tool_result = tool_executor.execute(task_type, _build_tool_args(task_type, request))
-            if tool_result.success:
-                yield f"data: {json.dumps({'type': 'tool_result', 'tool': task_type, 'result': tool_result.result})}\n\n"
-            else:
+            # Map non-tool task types to nearest real tool for fallback
+            fallback_task = task_type
+            if task_type in ("interpret_anomaly", "calibration_advice", "general_question"):
+                fallback_task = "detect_anomalies" if task_type == "interpret_anomaly" else "query_wells"
+
+            tool_result = tool_executor.execute(fallback_task, _build_tool_args(fallback_task, request))
+            yield f"data: {json.dumps({'type': 'tool_result', 'tool': fallback_task, 'success': tool_result.success, 'result': tool_result.result})}\n\n"
+            if not tool_result.success:
                 yield f"data: {json.dumps({'type': 'error', 'message': tool_result.error})}\n\n"
 
             yield "data: [DONE]\n\n"
@@ -255,24 +262,33 @@ async def chat_stream(request: ChatRequest):
                             if tc.function and tc.function.arguments:
                                 tool_calls_buffer[tc.index]["arguments"] += tc.function.arguments
 
-            # 7. Execute tool calls if any
-            for tc in tool_calls_buffer:
-                try:
-                    args = json.loads(tc["arguments"]) if isinstance(tc["arguments"], str) else tc["arguments"]
-                except json.JSONDecodeError:
-                    args = {}
+            # 7. Execute ALL tool calls, then ONE follow-up
+            if tool_calls_buffer:
+                # Parse all tool call arguments
+                parsed_calls = []
+                for tc in tool_calls_buffer:
+                    try:
+                        args = json.loads(tc["arguments"]) if isinstance(tc["arguments"], str) else tc["arguments"]
+                    except json.JSONDecodeError:
+                        args = {}
+                    parsed_calls.append((tc, args))
 
-                yield f"data: {json.dumps({'type': 'tool_call', 'tool': tc['name'], 'args': args})}\n\n"
+                # Build single assistant message with all tool calls
+                assistant_tool_calls = [
+                    {"id": f"call_{tc['name']}_{i}", "type": "function",
+                     "function": {"name": tc["name"], "arguments": json.dumps(args)}}
+                    for i, (tc, args) in enumerate(parsed_calls)
+                ]
+                messages.append({"role": "assistant", "content": collected_content or None, "tool_calls": assistant_tool_calls})
 
-                tool_result = tool_executor.execute(tc["name"], args)
-                yield f"data: {json.dumps({'type': 'tool_result', 'tool': tc['name'], 'success': tool_result.success, 'result': tool_result.result})}\n\n"
+                # Execute all tools and add results
+                for i, (tc, args) in enumerate(parsed_calls):
+                    yield f"data: {json.dumps({'type': 'tool_call', 'tool': tc['name'], 'args': args})}\n\n"
+                    tool_result = tool_executor.execute(tc["name"], args)
+                    yield f"data: {json.dumps({'type': 'tool_result', 'tool': tc['name'], 'success': tool_result.success, 'result': tool_result.result})}\n\n"
+                    messages.append({"role": "tool", "tool_call_id": f"call_{tc['name']}_{i}", "content": json.dumps(tool_result.result)})
 
-                # Feed tool result back to LLM for final response
-                messages.append({"role": "assistant", "content": collected_content, "tool_calls": [
-                    {"id": f"call_{tc['name']}", "type": "function", "function": {"name": tc["name"], "arguments": json.dumps(args)}}
-                ]})
-                messages.append({"role": "tool", "tool_call_id": f"call_{tc['name']}", "content": json.dumps(tool_result.result)})
-
+                # ONE follow-up call with all tool results
                 followup = await llm_router.acompletion(
                     model=model_pool,
                     messages=messages,

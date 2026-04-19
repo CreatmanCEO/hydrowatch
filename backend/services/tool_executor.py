@@ -1,5 +1,4 @@
 """Safe tool execution layer with validation and error handling."""
-import traceback
 from typing import Any
 
 from models.schemas import ToolResult

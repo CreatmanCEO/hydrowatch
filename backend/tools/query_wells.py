@@ -11,7 +11,9 @@ DATA_DIR = os.environ.get("DATA_DIR", "./data")
 def _load_wells() -> list[dict]:
     """Load wells from GeoJSON."""
     path = Path(DATA_DIR) / "wells.geojson"
-    with open(path) as f:
+    if not path.exists():
+        raise FileNotFoundError(f"Wells data not found at {path}. Run: python -m data_generator.generate_wells")
+    with open(path, encoding="utf-8") as f:
         geojson = json.load(f)
     return geojson["features"]
 

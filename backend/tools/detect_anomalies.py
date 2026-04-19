@@ -137,6 +137,7 @@ def detect_anomalies(well_id: str | None = None) -> list[AnomalyCard]:
             continue
         wid = csv_path.stem
         df = pd.read_csv(csv_path, parse_dates=["timestamp"])
+        df = df.sort_values("timestamp")
 
         cards.extend(_detect_debit_decline(df, wid))
         cards.extend(_detect_tds_spike(df, wid))

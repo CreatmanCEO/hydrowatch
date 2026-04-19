@@ -15,7 +15,9 @@ def get_region_stats(
 ) -> RegionStats:
     """Aggregate stats for wells within bbox [west, south, east, north]."""
     path = Path(DATA_DIR) / "wells.geojson"
-    with open(path) as f:
+    if not path.exists():
+        raise FileNotFoundError(f"Wells data not found at {path}. Run: python -m data_generator.generate_wells")
+    with open(path, encoding="utf-8") as f:
         geojson = json.load(f)
 
     west, south, east, north = bbox

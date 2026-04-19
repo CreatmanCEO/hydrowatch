@@ -59,11 +59,11 @@ MODEL_ADAPTORS = {
 }
 
 
-def get_model_adaptor(model_pool: str) -> str:
+def get_model_adaptor(model_pool: str, model_name: str = "") -> str:
     """Get the appropriate model adaptor text for a model pool."""
     adaptor = MODEL_ADAPTORS.get(model_pool, "")
     if isinstance(adaptor, dict):
-        # Pool A has sub-adaptors; use the first one as default
-        # (actual selection happens at runtime based on which model responds)
-        return list(adaptor.values())[0]
+        if "cerebras" in model_name or "llama" in model_name:
+            return adaptor.get("cerebras_llama", list(adaptor.values())[0])
+        return adaptor.get("gemini_flash", list(adaptor.values())[0])
     return adaptor

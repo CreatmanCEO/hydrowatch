@@ -31,7 +31,11 @@ class AnomalyInjector:
 
         # After decline, stay at reduced level
         if end_idx < len(ts):
-            result[end_idx:] = result[end_idx:] * (target / baseline)
+            final_value = result[end_idx - 1] if end_idx > start_idx else target
+            if baseline != 0:
+                result[end_idx:] = result[end_idx:] * (final_value / baseline)
+            else:
+                result[end_idx:] = target
 
         return result
 

@@ -18,7 +18,15 @@ def get_well_history(
 ) -> WellHistory:
     """Get time series for a well with trend analysis."""
     csv_path = Path(DATA_DIR) / "observations" / f"{well_id}.csv"
+    if not csv_path.exists():
+        raise FileNotFoundError(f"No observation data for well {well_id}")
+
     df = pd.read_csv(csv_path, parse_dates=["timestamp"])
+    df = df.sort_values("timestamp")
+
+    valid_params = {"debit_ls", "tds_mgl", "ph", "chloride_mgl", "water_level_m", "temperature_c"}
+    if parameter not in valid_params:
+        raise KeyError(f"Unknown parameter '{parameter}'. Valid: {', '.join(sorted(valid_params))}")
 
     if last_n_days is not None:
         cutoff = df["timestamp"].max() - pd.Timedelta(days=last_n_days)
