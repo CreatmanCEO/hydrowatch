@@ -1,9 +1,7 @@
 """LLM router with two model pools via LiteLLM."""
-import os
-from typing import AsyncIterator
-
 from litellm import Router
 from config import get_settings
+from services.prompt_engine import PromptEngine
 
 # Task → model pool routing
 TASK_ROUTING = {
@@ -17,26 +15,8 @@ TASK_ROUTING = {
     "general_question":   "pool-b",
 }
 
-SYSTEM_PROMPT = """You are HydroWatch AI — an expert groundwater monitoring assistant for Abu Dhabi wells.
-
-You help hydrogeologists analyze well data, detect anomalies, and make decisions.
-
-Your capabilities (via tools):
-- **query_wells**: Find wells by location, status, or cluster
-- **get_well_history**: Get time series data with trend analysis
-- **detect_anomalies**: Detect debit decline, TDS spikes, sensor faults
-- **get_region_stats**: Aggregate statistics for a map viewport
-- **validate_csv**: Validate uploaded CSV observation files
-
-Guidelines:
-1. Always use tools when the user asks about specific data — don't guess
-2. Respond in the same language as the user's message
-3. When showing anomalies, include severity and recommendations
-4. Reference well IDs (e.g., AUH-01-003) when discussing specific wells
-5. Use hydrogeological terminology appropriate for professionals
-
-{context}
-"""
+# Prompt engine singleton
+prompt_engine = PromptEngine()
 
 
 def create_router() -> Router:
@@ -89,6 +69,16 @@ def get_model_for_task(task_type: str) -> str:
     return TASK_ROUTING.get(task_type, "pool-b")
 
 
-def build_system_prompt(context_section: str) -> str:
-    """Build full system prompt with context bridge section."""
-    return SYSTEM_PROMPT.format(context=context_section)
+def build_system_prompt(
+    model_pool: str,
+    task_type: str,
+    context_section: str,
+    output_type: str = "text_response",
+) -> str:
+    """Build full system prompt via PromptEngine."""
+    return prompt_engine.build(
+        model_pool=model_pool,
+        task_type=task_type,
+        context_section=context_section,
+        output_type=output_type,
+    )
