@@ -86,6 +86,16 @@ async def get_metrics():
     return {"source": "sample", "models": SAMPLE_METRICS}
 
 
+@router.post("/run", tags=["metrics"])
+async def trigger_eval():
+    """Trigger eval pipeline. Runs in background."""
+    import asyncio
+    from eval.batch_runner import run_eval as _run_eval
+
+    asyncio.create_task(_run_eval())
+    return {"status": "started", "message": "Eval pipeline started. Check /api/metrics for results."}
+
+
 @router.get("/models")
 async def list_models():
     """List evaluated models with routing info."""

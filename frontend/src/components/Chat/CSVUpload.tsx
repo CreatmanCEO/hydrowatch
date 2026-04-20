@@ -2,9 +2,15 @@
 
 import { useState, useCallback } from "react";
 import { uploadCSV } from "@/lib/api";
+import { useChatStore } from "@/stores/chatStore";
+import { useMapStore } from "@/stores/mapStore";
 import type { ValidationResult } from "@/types";
 
-export function CSVUpload() {
+interface CSVUploadProps {
+  onAnalyze?: () => void;
+}
+
+export function CSVUpload({ onAnalyze }: CSVUploadProps) {
   const [isDragging, setIsDragging] = useState(false);
   const [result, setResult] = useState<ValidationResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -23,12 +29,25 @@ export function CSVUpload() {
     try {
       const res = await uploadCSV(file);
       setResult(res);
+
+      // Auto-send to chat for AI analysis
+      if (res.valid || res.warnings.length > 0) {
+        const summary = `I uploaded CSV "${file.name}": ${res.total_rows} rows, ${res.valid_rows} valid. ` +
+          (res.errors.length > 0 ? `Errors: ${res.errors.join('; ')}. ` : '') +
+          (res.warnings.length > 0 ? `Warnings: ${res.warnings.join('; ')}. ` : '') +
+          `Please analyze this data and highlight any concerns.`;
+
+        const { sendMessage } = useChatStore.getState();
+        const { getApiContext } = useMapStore.getState();
+        sendMessage(summary, getApiContext());
+        onAnalyze?.();
+      }
     } catch (err) {
       setError((err as Error).message);
     } finally {
       setIsUploading(false);
     }
-  }, []);
+  }, [onAnalyze]);
 
   const onDrop = useCallback(
     (e: React.DragEvent) => {

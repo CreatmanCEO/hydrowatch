@@ -38,13 +38,27 @@ const poolColors: Record<string, string> = {
 export function MetricsPanel() {
   const [data, setData] = useState<MetricsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRunning, setIsRunning] = useState(false);
 
-  useEffect(() => {
+  const fetchMetrics = () => {
     fetch("/api/metrics")
       .then((r) => r.json())
       .then(setData)
       .catch((e) => setError(e.message));
-  }, []);
+  };
+
+  useEffect(() => { fetchMetrics(); }, []);
+
+  const handleRunEval = async () => {
+    setIsRunning(true);
+    try {
+      await fetch("/api/metrics/run", { method: "POST" });
+      // Poll for results after 30s
+      setTimeout(() => { fetchMetrics(); setIsRunning(false); }, 30000);
+    } catch {
+      setIsRunning(false);
+    }
+  };
 
   if (error) return <div className="p-4 text-red-500 text-sm">Failed to load metrics: {error}</div>;
   if (!data) return <div className="p-4 text-gray-400 text-sm">Loading metrics...</div>;
@@ -55,9 +69,18 @@ export function MetricsPanel() {
     <div className="p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h2 className="font-semibold text-lg">Model Evaluation</h2>
-        <span className="text-xs text-gray-400 px-2 py-1 bg-gray-100 rounded">
-          {data.source === "sample" ? "Sample data" : "Eval run"}
-        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-400 px-2 py-1 bg-gray-100 rounded">
+            {data.source === "sample" ? "Sample data" : "Eval run"}
+          </span>
+          <button
+            onClick={handleRunEval}
+            disabled={isRunning}
+            className="text-xs px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 transition-colors"
+          >
+            {isRunning ? "Running..." : "Run Eval"}
+          </button>
+        </div>
       </div>
 
       {/* Comparison table */}

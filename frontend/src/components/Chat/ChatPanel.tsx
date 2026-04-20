@@ -5,6 +5,7 @@ import { useChatStore } from "@/stores/chatStore";
 import { useMapStore } from "@/stores/mapStore";
 import { MessageBubble } from "./MessageBubble";
 import { CSVUpload } from "./CSVUpload";
+import { CommandBar } from "./CommandBar";
 import { MetricsPanel } from "@/components/Metrics/MetricsPanel";
 
 type ViewMode = "chat" | "csv" | "metrics";
@@ -67,7 +68,7 @@ export function ChatPanel() {
       {/* Panel overlays — shown above messages, not instead of */}
       {view === "csv" && (
         <div className="border-b max-h-[40%] overflow-y-auto shrink-0">
-          <CSVUpload />
+          <CSVUpload onAnalyze={() => setView("chat")} />
         </div>
       )}
 
@@ -91,12 +92,12 @@ export function ChatPanel() {
                     </p>
 
                     <p className="text-xs font-medium text-gray-500 uppercase mb-2">What I can do:</p>
-                    <ul className="text-sm text-gray-600 space-y-1 mb-3">
-                      <li>&#x1F4CD; Query wells by location, status, or cluster</li>
-                      <li>&#x26A0;&#xFE0F; Detect anomalies: debit decline, TDS spikes, sensor faults</li>
-                      <li>&#x1F4C8; Analyze time series trends for any parameter</li>
-                      <li>&#x1F4CA; Regional statistics for the current viewport</li>
-                      <li>&#x1F4C4; Validate uploaded CSV observation files</li>
+                    <ul className="text-sm text-gray-600 space-y-1.5 mb-3">
+                      <li className="flex gap-2"><span className="text-gray-400 shrink-0">&bull;</span> Query wells by location, status, or cluster</li>
+                      <li className="flex gap-2"><span className="text-gray-400 shrink-0">&bull;</span> Detect anomalies: debit decline, TDS spikes, sensor faults</li>
+                      <li className="flex gap-2"><span className="text-gray-400 shrink-0">&bull;</span> Analyze time series trends for any parameter</li>
+                      <li className="flex gap-2"><span className="text-gray-400 shrink-0">&bull;</span> Regional statistics for the current viewport</li>
+                      <li className="flex gap-2"><span className="text-gray-400 shrink-0">&bull;</span> Validate uploaded CSV observation files</li>
                     </ul>
 
                     <p className="text-xs font-medium text-gray-500 uppercase mb-2">How to use:</p>
@@ -135,6 +136,22 @@ export function ChatPanel() {
               <MessageBubble key={msg.id} message={msg} />
             ))}
 
+            {/* Loading indicator */}
+            {isLoading && !streamingText && (
+              <div className="flex justify-start mb-3">
+                <div className="bg-gray-100 rounded-2xl rounded-bl-md px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-gray-500">
+                    <div className="flex gap-1">
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:0ms]" />
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:150ms]" />
+                      <span className="w-2 h-2 bg-blue-400 rounded-full animate-bounce [animation-delay:300ms]" />
+                    </div>
+                    <span>Analyzing...</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Streaming text */}
             {streamingText && (
               <div className="flex justify-start mb-3">
@@ -150,7 +167,17 @@ export function ChatPanel() {
             <div ref={messagesEndRef} />
           </div>
 
-      {/* Input — always visible */}
+      {/* Quick commands */}
+      <CommandBar
+        onExecute={(prompt) => {
+          const context = getApiContext();
+          sendMessage(prompt, context);
+          setView("chat");
+        }}
+        disabled={isLoading}
+      />
+
+      {/* Input */}
       <form onSubmit={handleSubmit} className="border-t px-4 py-3">
         <div className="flex gap-2">
           <input
