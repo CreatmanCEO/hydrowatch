@@ -38,14 +38,10 @@ def create_router() -> Router:
             "api_key": gemini_key,
         }},
 
-        # Pool B — complex tasks
+        # Pool B — complex tasks (Haiku only, Gemini too unreliable for tool calling)
         {"model_name": "pool-b", "litellm_params": {
             "model": "openrouter/anthropic/claude-haiku-4.5",
             "api_key": or_key,
-        }},
-        {"model_name": "pool-b", "litellm_params": {
-            "model": "gemini/gemini-2.5-flash",
-            "api_key": gemini_key,
         }},
 
         # Pool B upgrade — deep reasoning
