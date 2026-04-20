@@ -40,7 +40,11 @@ def _detect_debit_decline(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
                 value_current=round(mean_q4, 2),
                 value_baseline=round(mean_q1, 2),
                 change_pct=round(change_pct, 1),
-                recommendation="Schedule pump inspection and well rehabilitation assessment",
+                recommendation=(
+                    "URGENT: Immediate well rehabilitation required. Consider reducing pumping rate." if change_pct < -40
+                    else "Schedule pump test and well assessment within 2 weeks." if change_pct < -25
+                    else "Monitor closely. Schedule inspection if decline continues."
+                ),
             ))
     return cards
 
@@ -108,9 +112,9 @@ def _detect_sensor_fault(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
                 title=f"Sensor fault in {col}",
                 description=f"{col} shows {max_run} consecutive zero readings — likely sensor malfunction",
                 value_current=0.0,
-                value_baseline=float(np.mean(values[values != 0])) if (values != 0).any() else 0.0,
+                value_baseline=round(float(np.mean(values[values != 0])), 2) if (values != 0).any() else 0.0,
                 change_pct=-100.0,
-                recommendation=f"Inspect {col} sensor; replace if confirmed faulty",
+                recommendation=f"Deploy field team to inspect and replace faulty {col} sensor.",
             ))
     return cards
 
@@ -147,5 +151,26 @@ def detect_anomalies(well_id: str | None = None) -> list[AnomalyCard]:
     # Sort by severity
     severity_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
     cards.sort(key=lambda c: severity_order.get(c.severity, 4))
+
+    # When scanning all wells, limit output to top anomalies to avoid flooding UI
+    if well_id is None and len(cards) > 10:
+        total = len(cards)
+        by_severity = {}
+        for c in cards:
+            by_severity[c.severity] = by_severity.get(c.severity, 0) + 1
+        summary = ", ".join(f"{v} {k}" for k, v in by_severity.items())
+        # Keep top 10, add summary card
+        cards = cards[:10]
+        cards.append(AnomalyCard(
+            severity="low",
+            well_id="NETWORK",
+            anomaly_type="debit_decline",
+            title=f"Network summary: {total} anomalies detected",
+            description=f"Showing top 10 by severity. Total breakdown: {summary}.",
+            value_current=0,
+            value_baseline=0,
+            change_pct=0,
+            recommendation="Use 'detect_anomalies' on individual wells for detailed analysis.",
+        ))
 
     return cards

@@ -1,0 +1,19 @@
+{
+  "openrouter/deepseek/deepseek-chat-v3-0324": {
+    "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+    "total_cases": 96,
+    "correct_tool_calls": 66,
+    "accuracy": 0.6875,
+    "schema_valid_count": 38,
+    "schema_compliance": 0.3958333333333333,
+    "latency_p50": 2862.5,
+    "latency_p95": 10011.75,
+    "total_cost_usd": 0.03359899999999999,
+    "cost_per_request": 0.00034998958333333323,
+    "total_tokens_in": 226010,
+    "total_tokens_out": 7001,
+    "avg_tokens_per_request": 2427.1979166666665,
+    "error_count": 0,
+    "error_rate": 0.0
+  }
+}

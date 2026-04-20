@@ -9,6 +9,7 @@ import type { WellProperties } from "@/types";
 import { WellPopup } from "./WellPopup";
 import { LayerControls } from "./LayerControls";
 import { DepressionConeLayer } from "./DepressionConeLayer";
+import { InterferenceLayer } from "./InterferenceLayer";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -152,6 +153,11 @@ export function WellsMap() {
         {/* Depression cone layer */}
         {activeLayers.includes("depression_cones") && wellsGeoJSON && (
           <DepressionConeLayer wellsGeoJSON={wellsGeoJSON} />
+        )}
+
+        {/* Interference lines */}
+        {activeLayers.includes("interference") && wellsGeoJSON && (
+          <InterferenceLayer wellsGeoJSON={wellsGeoJSON} />
         )}
 
         {/* Well popup */}
