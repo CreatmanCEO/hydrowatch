@@ -61,9 +61,10 @@ def create_router() -> Router:
 
     return Router(
         model_list=model_list,
-        routing_strategy="simple-shuffle",
-        num_retries=2,
-        timeout=30,
+        routing_strategy="latency-based-routing",
+        num_retries=3,
+        timeout=45,
+        allowed_fails=1,
     )
 
 
