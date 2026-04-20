@@ -10,9 +10,21 @@ RESULTS_DIR = Path(__file__).parent / "results"
 
 # Sample metrics for demo (used when no eval has been run yet)
 SAMPLE_METRICS = {
+    "openrouter/deepseek/deepseek-chat-v3-0324": {
+        "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+        "pool": "pool-a + pool-b",
+        "total_cases": 48,
+        "accuracy": 0.896,
+        "schema_compliance": 0.875,
+        "latency_p50": 380,
+        "latency_p95": 950,
+        "cost_per_request": 0.000052,
+        "avg_tokens_per_request": 900,
+        "error_rate": 0.0,
+    },
     "gemini/gemini-2.5-flash": {
         "model": "gemini/gemini-2.5-flash",
-        "pool": "pool-a",
+        "pool": "pool-a (fallback)",
         "total_cases": 48,
         "accuracy": 0.875,
         "schema_compliance": 0.812,
@@ -22,21 +34,21 @@ SAMPLE_METRICS = {
         "avg_tokens_per_request": 850,
         "error_rate": 0.021,
     },
-    "cerebras/llama-3.3-70b": {
-        "model": "cerebras/llama-3.3-70b",
-        "pool": "pool-a (fallback)",
+    "openrouter/nvidia/nemotron-3-super": {
+        "model": "openrouter/nvidia/nemotron-3-super",
+        "pool": "pool-b (fallback)",
         "total_cases": 48,
-        "accuracy": 0.833,
-        "schema_compliance": 0.854,
-        "latency_p50": 280,
-        "latency_p95": 680,
-        "cost_per_request": 0.000062,
-        "avg_tokens_per_request": 920,
+        "accuracy": 0.812,
+        "schema_compliance": 0.792,
+        "latency_p50": 520,
+        "latency_p95": 1400,
+        "cost_per_request": 0.0,
+        "avg_tokens_per_request": 1050,
         "error_rate": 0.042,
     },
-    "anthropic/claude-haiku-4-5-20251001": {
-        "model": "anthropic/claude-haiku-4-5-20251001",
-        "pool": "pool-b",
+    "openrouter/anthropic/claude-haiku-4-5-20251001": {
+        "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+        "pool": "pool-b-upgrade",
         "total_cases": 48,
         "accuracy": 0.938,
         "schema_compliance": 0.917,
@@ -46,26 +58,14 @@ SAMPLE_METRICS = {
         "avg_tokens_per_request": 1100,
         "error_rate": 0.0,
     },
-    "anthropic/claude-sonnet-4-5-20250514": {
-        "model": "anthropic/claude-sonnet-4-5-20250514",
-        "pool": "pool-b-upgrade",
-        "total_cases": 48,
-        "accuracy": 0.958,
-        "schema_compliance": 0.938,
-        "latency_p50": 1200,
-        "latency_p95": 3500,
-        "cost_per_request": 0.00145,
-        "avg_tokens_per_request": 1450,
-        "error_rate": 0.0,
-    },
 }
 
 
 POOL_MAP = {
-    "gemini/gemini-2.5-flash": "pool-a",
-    "cerebras/llama-3.3-70b": "pool-a (fallback)",
-    "anthropic/claude-haiku-4-5-20251001": "pool-b",
-    "anthropic/claude-sonnet-4-5-20250514": "pool-b-upgrade",
+    "openrouter/deepseek/deepseek-chat-v3-0324": "pool-a + pool-b",
+    "gemini/gemini-2.5-flash": "pool-a (fallback)",
+    "openrouter/nvidia/nemotron-3-super": "pool-b (fallback)",
+    "openrouter/anthropic/claude-haiku-4-5-20251001": "pool-b-upgrade",
 }
 
 

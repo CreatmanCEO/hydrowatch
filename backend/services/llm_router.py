@@ -23,59 +23,43 @@ def create_router() -> Router:
     """Create LiteLLM router with two model pools."""
     settings = get_settings()
 
+    or_key = settings.openrouter_api_key.get_secret_value()
+    gemini_key = settings.gemini_api_key.get_secret_value()
+
     model_list = [
-        # Pool A — simple/medium tasks (mutual fallback)
-        {
-            "model_name": "pool-a",
-            "litellm_params": {
-                "model": settings.model_pool_a_primary,
-                "api_key": settings.gemini_api_key.get_secret_value(),
-            },
-        },
-        {
-            "model_name": "pool-a",
-            "litellm_params": {
-                "model": settings.model_pool_a_fallback,
-                "api_key": settings.cerebras_api_key.get_secret_value(),
-            },
-        },
-        # Pool B — complex tasks (Anthropic → Gemini → Cerebras fallback chain)
-        {
-            "model_name": "pool-b",
-            "litellm_params": {
-                "model": settings.model_pool_b_default,
-                "api_key": settings.anthropic_api_key.get_secret_value(),
-            },
-        },
-        {
-            "model_name": "pool-b",
-            "litellm_params": {
-                "model": settings.model_pool_a_primary,
-                "api_key": settings.gemini_api_key.get_secret_value(),
-            },
-        },
-        {
-            "model_name": "pool-b",
-            "litellm_params": {
-                "model": settings.model_pool_a_fallback,
-                "api_key": settings.cerebras_api_key.get_secret_value(),
-            },
-        },
-        # Pool B upgrade — same fallback chain
-        {
-            "model_name": "pool-b-upgrade",
-            "litellm_params": {
-                "model": settings.model_pool_b_complex,
-                "api_key": settings.anthropic_api_key.get_secret_value(),
-            },
-        },
-        {
-            "model_name": "pool-b-upgrade",
-            "litellm_params": {
-                "model": settings.model_pool_a_primary,
-                "api_key": settings.gemini_api_key.get_secret_value(),
-            },
-        },
+        # Pool A — simple/medium tasks
+        # Primary: DeepSeek V3.2 via OpenRouter (cheap, stable, tool calling)
+        {"model_name": "pool-a", "litellm_params": {
+            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "api_key": or_key,
+        }},
+        # Fallback: Gemini Flash direct (free but sometimes unreliable)
+        {"model_name": "pool-a", "litellm_params": {
+            "model": "gemini/gemini-2.5-flash",
+            "api_key": gemini_key,
+        }},
+
+        # Pool B — complex tasks (reasoning, anomaly interpretation)
+        # Primary: DeepSeek V3.2 via OpenRouter
+        {"model_name": "pool-b", "litellm_params": {
+            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "api_key": or_key,
+        }},
+        # Fallback: free NVIDIA Nemotron via OpenRouter
+        {"model_name": "pool-b", "litellm_params": {
+            "model": "openrouter/nvidia/nemotron-3-super",
+            "api_key": or_key,
+        }},
+
+        # Pool B upgrade — deep reasoning
+        {"model_name": "pool-b-upgrade", "litellm_params": {
+            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+            "api_key": or_key,
+        }},
+        {"model_name": "pool-b-upgrade", "litellm_params": {
+            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "api_key": or_key,
+        }},
     ]
 
     return Router(

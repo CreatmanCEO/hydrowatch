@@ -64,23 +64,21 @@ export function ChatPanel() {
         </div>
       </div>
 
-      {/* View switcher */}
+      {/* Panel overlays — shown above messages, not instead of */}
       {view === "csv" && (
-        <div className="flex-1 overflow-y-auto border-b">
+        <div className="border-b max-h-[40%] overflow-y-auto shrink-0">
           <CSVUpload />
         </div>
       )}
 
       {view === "metrics" && (
-        <div className="flex-1 overflow-y-auto">
+        <div className="border-b max-h-[60%] overflow-y-auto shrink-0">
           <MetricsPanel />
         </div>
       )}
 
-      {view === "chat" && (
-        <>
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
+      {/* Messages — always visible */}
+      <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
             {messages.length === 0 && !streamingText && (
               <div className="px-2 py-4">
                 {/* Welcome message styled as assistant bubble */}
@@ -151,8 +149,6 @@ export function ChatPanel() {
 
             <div ref={messagesEndRef} />
           </div>
-        </>
-      )}
 
       {/* Input — always visible */}
       <form onSubmit={handleSubmit} className="border-t px-4 py-3">

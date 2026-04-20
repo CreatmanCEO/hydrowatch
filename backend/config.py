@@ -7,16 +7,17 @@ from pydantic import SecretStr, Field
 class Settings(BaseSettings):
     # LLM Provider Keys
     gemini_api_key: SecretStr
-    cerebras_api_key: SecretStr
-    anthropic_api_key: SecretStr
+    cerebras_api_key: SecretStr = SecretStr("")
+    anthropic_api_key: SecretStr = SecretStr("")
+    openrouter_api_key: SecretStr = SecretStr("")
 
-    # Model routing — Pool A (simple/medium, mutual fallback)
-    model_pool_a_primary: str = "gemini/gemini-2.5-flash"
-    model_pool_a_fallback: str = "cerebras/llama-3.3-70b"
+    # Model routing — Pool A (simple/medium)
+    model_pool_a_primary: str = "openrouter/deepseek/deepseek-chat-v3-0324"
+    model_pool_a_fallback: str = "gemini/gemini-2.5-flash"
 
     # Model routing — Pool B (complex tasks)
-    model_pool_b_default: str = "anthropic/claude-haiku-4-5-20251001"
-    model_pool_b_complex: str = "anthropic/claude-sonnet-4-5-20250514"
+    model_pool_b_default: str = "openrouter/deepseek/deepseek-chat-v3-0324"
+    model_pool_b_complex: str = "openrouter/anthropic/claude-haiku-4-5-20251001"
 
     llm_temperature: float = 0.1
 
