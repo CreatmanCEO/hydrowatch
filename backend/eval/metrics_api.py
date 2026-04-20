@@ -10,45 +10,9 @@ RESULTS_DIR = Path(__file__).parent / "results"
 
 # Sample metrics for demo (used when no eval has been run yet)
 SAMPLE_METRICS = {
-    "openrouter/deepseek/deepseek-chat-v3-0324": {
-        "model": "openrouter/deepseek/deepseek-chat-v3-0324",
-        "pool": "pool-a + pool-b",
-        "total_cases": 48,
-        "accuracy": 0.896,
-        "schema_compliance": 0.875,
-        "latency_p50": 380,
-        "latency_p95": 950,
-        "cost_per_request": 0.000052,
-        "avg_tokens_per_request": 900,
-        "error_rate": 0.0,
-    },
-    "gemini/gemini-2.5-flash": {
-        "model": "gemini/gemini-2.5-flash",
-        "pool": "pool-a (fallback)",
-        "total_cases": 48,
-        "accuracy": 0.875,
-        "schema_compliance": 0.812,
-        "latency_p50": 420,
-        "latency_p95": 1150,
-        "cost_per_request": 0.000045,
-        "avg_tokens_per_request": 850,
-        "error_rate": 0.021,
-    },
-    "openrouter/nvidia/nemotron-3-super": {
-        "model": "openrouter/nvidia/nemotron-3-super",
-        "pool": "pool-b (fallback)",
-        "total_cases": 48,
-        "accuracy": 0.812,
-        "schema_compliance": 0.792,
-        "latency_p50": 520,
-        "latency_p95": 1400,
-        "cost_per_request": 0.0,
-        "avg_tokens_per_request": 1050,
-        "error_rate": 0.042,
-    },
     "openrouter/anthropic/claude-haiku-4-5-20251001": {
         "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
-        "pool": "pool-b-upgrade",
+        "pool": "pool-a + pool-b",
         "total_cases": 48,
         "accuracy": 0.938,
         "schema_compliance": 0.917,
@@ -58,14 +22,37 @@ SAMPLE_METRICS = {
         "avg_tokens_per_request": 1100,
         "error_rate": 0.0,
     },
+    "gemini/gemini-2.5-flash": {
+        "model": "gemini/gemini-2.5-flash",
+        "pool": "fallback",
+        "total_cases": 48,
+        "accuracy": 0.875,
+        "schema_compliance": 0.812,
+        "latency_p50": 420,
+        "latency_p95": 1150,
+        "cost_per_request": 0.000045,
+        "avg_tokens_per_request": 850,
+        "error_rate": 0.021,
+    },
+    "openrouter/anthropic/claude-sonnet-4-5-20250514": {
+        "model": "openrouter/anthropic/claude-sonnet-4-5-20250514",
+        "pool": "pool-b-upgrade",
+        "total_cases": 48,
+        "accuracy": 0.958,
+        "schema_compliance": 0.938,
+        "latency_p50": 1200,
+        "latency_p95": 3500,
+        "cost_per_request": 0.00145,
+        "avg_tokens_per_request": 1450,
+        "error_rate": 0.0,
+    },
 }
 
 
 POOL_MAP = {
-    "openrouter/deepseek/deepseek-chat-v3-0324": "pool-a + pool-b",
-    "gemini/gemini-2.5-flash": "pool-a (fallback)",
-    "openrouter/nvidia/nemotron-3-super": "pool-b (fallback)",
-    "openrouter/anthropic/claude-haiku-4-5-20251001": "pool-b-upgrade",
+    "openrouter/anthropic/claude-haiku-4-5-20251001": "pool-a + pool-b",
+    "gemini/gemini-2.5-flash": "fallback",
+    "openrouter/anthropic/claude-sonnet-4-5-20250514": "pool-b-upgrade",
 }
 
 

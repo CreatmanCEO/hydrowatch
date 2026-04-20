@@ -10,7 +10,7 @@ export default function Home() {
       </div>
 
       {/* Chat — right 40% (bottom drawer on mobile) */}
-      <div className="hidden md:flex md:w-[40%] md:min-w-[40%] h-full border-l shrink-0">
+      <div className="hidden md:flex md:w-[40%] md:min-w-[40%] md:max-w-[40%] h-full border-l shrink-0">
         <ChatPanel />
       </div>
 

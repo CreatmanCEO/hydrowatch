@@ -67,6 +67,14 @@ export const useChatStore = create<ChatState>()(
 
                 switch (event.type) {
                   case "token":
+                    // Filter raw tool call markup that some models output as text
+                    if (event.content.includes("tool_call_begin") ||
+                        event.content.includes("tool_calls_begin") ||
+                        event.content.includes("tool_call_end") ||
+                        event.content.includes("tool_sep") ||
+                        event.content.includes("tool_calls_end")) {
+                      break;
+                    }
                     assistantContent += event.content;
                     set({ streamingText: assistantContent });
                     break;

@@ -2,6 +2,7 @@
 
 import type { ChatMessage } from "@/types";
 import { AnomalyCardComponent } from "./AnomalyCard";
+import { WellHistoryChart } from "./WellHistoryChart";
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
@@ -56,12 +57,7 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
             );
           }
           if (card.type === "well_history") {
-            return (
-              <div key={i} className="mt-2 p-2 bg-white rounded border text-xs">
-                <div className="font-medium">{card.well_id}: {card.parameter}</div>
-                <div className="text-gray-600">Trend: {card.trend} &middot; {card.values.length} data points</div>
-              </div>
-            );
+            return <WellHistoryChart key={i} data={card} />;
           }
           return null;
         })}

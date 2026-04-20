@@ -71,6 +71,18 @@ You are advising on model calibration or operational optimization.
 - Consider trade-offs: yield vs. sustainability, cost vs. accuracy
 - Suggest specific parameter adjustments with expected outcomes
 """,
+
+    "depression_analysis": """## Task: Depression Cone Analysis
+When asked about depression cones or well interference:
+1. Call query_wells to get well locations and yields in viewport
+2. Call detect_anomalies to check for interference patterns
+3. Reason about depression cones using:
+   - Well proximity (wells < 2km apart may interfere)
+   - Yield magnitudes (higher yield = larger cone)
+   - Theis superposition principle
+4. Describe cone geometry: center, approximate radius, overlap with neighbors
+You do NOT need a dedicated depression cone tool — reason from available data.
+""",
 }
 
 

@@ -5,14 +5,15 @@ from services.prompt_engine import PromptEngine
 
 # Task → model pool routing
 TASK_ROUTING = {
-    "validate_csv":       "pool-a",
-    "query_wells":        "pool-a",
-    "get_region_stats":   "pool-a",
-    "get_well_history":   "pool-a",
-    "detect_anomalies":   "pool-b",
-    "interpret_anomaly":  "pool-b",
-    "calibration_advice": "pool-b-upgrade",
-    "general_question":   "pool-b",
+    "validate_csv":         "pool-a",
+    "query_wells":          "pool-a",
+    "get_region_stats":     "pool-a",
+    "get_well_history":     "pool-a",
+    "detect_anomalies":     "pool-b",
+    "interpret_anomaly":    "pool-b",
+    "depression_analysis":  "pool-b",
+    "calibration_advice":   "pool-b-upgrade",
+    "general_question":     "pool-b",
 }
 
 # Prompt engine singleton
@@ -28,36 +29,32 @@ def create_router() -> Router:
 
     model_list = [
         # Pool A — simple/medium tasks
-        # Primary: DeepSeek V3.2 via OpenRouter (cheap, stable, tool calling)
         {"model_name": "pool-a", "litellm_params": {
-            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
             "api_key": or_key,
         }},
-        # Fallback: Gemini Flash direct (free but sometimes unreliable)
         {"model_name": "pool-a", "litellm_params": {
             "model": "gemini/gemini-2.5-flash",
             "api_key": gemini_key,
         }},
 
-        # Pool B — complex tasks (reasoning, anomaly interpretation)
-        # Primary: DeepSeek V3.2 via OpenRouter
+        # Pool B — complex tasks
         {"model_name": "pool-b", "litellm_params": {
-            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
             "api_key": or_key,
         }},
-        # Fallback: free NVIDIA Nemotron via OpenRouter
         {"model_name": "pool-b", "litellm_params": {
-            "model": "openrouter/nvidia/nemotron-3-super",
-            "api_key": or_key,
+            "model": "gemini/gemini-2.5-flash",
+            "api_key": gemini_key,
         }},
 
         # Pool B upgrade — deep reasoning
         {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+            "model": "openrouter/anthropic/claude-sonnet-4-5-20250514",
             "api_key": or_key,
         }},
         {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/deepseek/deepseek-chat-v3-0324",
+            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
             "api_key": or_key,
         }},
     ]

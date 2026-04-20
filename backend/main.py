@@ -161,18 +161,22 @@ def _classify_task(message: str) -> str:
     msg = message.lower()
     if any(w in msg for w in ["csv", "upload", "validate", "file"]):
         return "validate_csv"
-    if any(w in msg for w in ["anomal", "decline", "spike", "fault", "problem"]):
+    if any(w in msg for w in ["anomal", "decline", "spike", "fault", "problem", "scan"]):
         return "detect_anomalies"
-    if any(w in msg for w in ["history", "trend", "time series", "chart"]):
-        return "get_well_history"
-    if any(w in msg for w in ["region", "area", "viewport", "overview", "stats"]):
-        return "get_region_stats"
-    if any(w in msg for w in ["find", "search", "list", "wells", "query"]):
-        return "query_wells"
-    if any(w in msg for w in ["interpret", "why", "cause", "explain", "reason"]):
-        return "interpret_anomaly"
     if any(w in msg for w in ["calibrat", "optimi", "theis", "pumping schedule"]):
         return "calibration_advice"
+    if any(w in msg for w in ["interpret", "why", "cause", "explain", "reason", "root cause"]):
+        return "interpret_anomaly"
+    if any(w in msg for w in ["depression", "cone", "interference", "drawdown"]):
+        return "depression_analysis"
+    if any(w in msg for w in ["region", "area", "viewport", "overview", "stats", "summary", "report", "daily"]):
+        return "get_region_stats"
+    if any(w in msg for w in ["quality", "tds", "chloride", "ph ", "salinity", "compare cluster"]):
+        return "general_question"
+    if any(w in msg for w in ["history", "trend", "time series", "chart"]):
+        return "get_well_history"
+    if any(w in msg for w in ["find", "search", "list", "wells", "query", "status", "active", "inactive"]):
+        return "query_wells"
     return "general_question"
 
 
@@ -292,6 +296,7 @@ async def chat_stream(request: ChatRequest):
                     messages.append({"role": "tool", "tool_call_id": f"call_{tc['name']}_{i}", "content": json.dumps(tool_result.result)})
 
                 # ONE follow-up call with all tool results
+                # No tools param — force text response, prevent LLM from attempting more tool calls as text
                 followup = await llm_router.acompletion(
                     model=model_pool,
                     messages=messages,

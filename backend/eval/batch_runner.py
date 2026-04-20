@@ -177,9 +177,8 @@ def estimate_cost(model: str, tokens_in: int, tokens_out: int, response=None) ->
 
     # Fallback: manual approximate pricing (USD per 1M tokens)
     pricing = {
-        "openrouter/deepseek/deepseek-chat-v3-0324": {"input": 0.26, "output": 0.42},
-        "openrouter/nvidia/nemotron-3-super": {"input": 0.0, "output": 0.0},
         "openrouter/anthropic/claude-haiku-4-5-20251001": {"input": 0.80, "output": 4.00},
+        "openrouter/anthropic/claude-sonnet-4-5-20250514": {"input": 3.00, "output": 15.00},
         "gemini/gemini-2.5-flash": {"input": 0.15, "output": 0.60},
     }
 
