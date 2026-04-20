@@ -30,7 +30,7 @@ def create_router() -> Router:
     model_list = [
         # Pool A — simple/medium tasks
         {"model_name": "pool-a", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+            "model": "openrouter/anthropic/claude-haiku-4.5",
             "api_key": or_key,
         }},
         {"model_name": "pool-a", "litellm_params": {
@@ -40,7 +40,7 @@ def create_router() -> Router:
 
         # Pool B — complex tasks
         {"model_name": "pool-b", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+            "model": "openrouter/anthropic/claude-haiku-4.5",
             "api_key": or_key,
         }},
         {"model_name": "pool-b", "litellm_params": {
@@ -50,11 +50,11 @@ def create_router() -> Router:
 
         # Pool B upgrade — deep reasoning
         {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/anthropic/claude-sonnet-4-5-20250514",
+            "model": "openrouter/anthropic/claude-sonnet-4.5",
             "api_key": or_key,
         }},
         {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+            "model": "openrouter/anthropic/claude-haiku-4.5",
             "api_key": or_key,
         }},
     ]

@@ -12,12 +12,12 @@ class Settings(BaseSettings):
     openrouter_api_key: SecretStr = SecretStr("")
 
     # Model routing — Pool A (simple/medium)
-    model_pool_a_primary: str = "openrouter/anthropic/claude-haiku-4-5-20251001"
+    model_pool_a_primary: str = "openrouter/anthropic/claude-haiku-4.5"
     model_pool_a_fallback: str = "gemini/gemini-2.5-flash"
 
     # Model routing — Pool B (complex tasks)
-    model_pool_b_default: str = "openrouter/anthropic/claude-haiku-4-5-20251001"
-    model_pool_b_complex: str = "openrouter/anthropic/claude-sonnet-4-5-20250514"
+    model_pool_b_default: str = "openrouter/anthropic/claude-haiku-4.5"
+    model_pool_b_complex: str = "openrouter/anthropic/claude-sonnet-4.5"
 
     llm_temperature: float = 0.1
 

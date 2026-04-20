@@ -173,5 +173,5 @@ class TestCostEstimation:
 
     def test_sonnet_more_expensive(self):
         flash_cost = estimate_cost("gemini/gemini-2.5-flash", 1000, 500)
-        sonnet_cost = estimate_cost("anthropic/claude-sonnet-4-5-20250514", 1000, 500)
+        sonnet_cost = estimate_cost("anthropic/claude-sonnet-4.5", 1000, 500)
         assert sonnet_cost > flash_cost

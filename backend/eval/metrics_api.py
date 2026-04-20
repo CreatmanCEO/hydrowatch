@@ -10,8 +10,8 @@ RESULTS_DIR = Path(__file__).parent / "results"
 
 # Sample metrics for demo (used when no eval has been run yet)
 SAMPLE_METRICS = {
-    "openrouter/anthropic/claude-haiku-4-5-20251001": {
-        "model": "openrouter/anthropic/claude-haiku-4-5-20251001",
+    "openrouter/anthropic/claude-haiku-4.5": {
+        "model": "openrouter/anthropic/claude-haiku-4.5",
         "pool": "pool-a + pool-b",
         "total_cases": 48,
         "accuracy": 0.938,
@@ -34,8 +34,8 @@ SAMPLE_METRICS = {
         "avg_tokens_per_request": 850,
         "error_rate": 0.021,
     },
-    "openrouter/anthropic/claude-sonnet-4-5-20250514": {
-        "model": "openrouter/anthropic/claude-sonnet-4-5-20250514",
+    "openrouter/anthropic/claude-sonnet-4.5": {
+        "model": "openrouter/anthropic/claude-sonnet-4.5",
         "pool": "pool-b-upgrade",
         "total_cases": 48,
         "accuracy": 0.958,
@@ -50,9 +50,9 @@ SAMPLE_METRICS = {
 
 
 POOL_MAP = {
-    "openrouter/anthropic/claude-haiku-4-5-20251001": "pool-a + pool-b",
+    "openrouter/anthropic/claude-haiku-4.5": "pool-a + pool-b",
     "gemini/gemini-2.5-flash": "fallback",
-    "openrouter/anthropic/claude-sonnet-4-5-20250514": "pool-b-upgrade",
+    "openrouter/anthropic/claude-sonnet-4.5": "pool-b-upgrade",
 }
 
 
@@ -95,12 +95,12 @@ async def list_models():
             },
             "pool-b": {
                 "description": "Complex tasks — reasoning required",
-                "models": ["anthropic/claude-haiku-4-5-20251001"],
+                "models": ["anthropic/claude-haiku-4.5"],
                 "tasks": ["detect_anomalies", "interpret_anomaly", "general_question"],
             },
             "pool-b-upgrade": {
                 "description": "Deep reasoning — comprehensive analysis",
-                "models": ["anthropic/claude-sonnet-4-5-20250514"],
+                "models": ["anthropic/claude-sonnet-4.5"],
                 "tasks": ["calibration_advice"],
             },
         }
