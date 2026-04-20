@@ -9,7 +9,7 @@ interface Props {
   wellsGeoJSON: WellsGeoJSON;
 }
 
-const INTERFERENCE_RADIUS_KM = 2;
+const INTERFERENCE_RADIUS_KM = 5;
 
 function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
   const R = 6371;
@@ -55,8 +55,11 @@ export function InterferenceLayer({ wellsGeoJSON }: Props) {
       }
     }
 
-    return { type: "FeatureCollection", features };
+    console.log(`InterferenceLayer: ${features.length} lines generated`);
+    return { type: "FeatureCollection" as const, features };
   }, [wellsGeoJSON]);
+
+  if (linesGeoJSON.features.length === 0) return null;
 
   return (
     <Source id="interference-lines" type="geojson" data={linesGeoJSON}>
@@ -64,10 +67,9 @@ export function InterferenceLayer({ wellsGeoJSON }: Props) {
         id="interference-lines-layer"
         type="line"
         paint={{
-          "line-color": ["case", ["get", "both_active"], "#ef4444", "#9ca3af"],
-          "line-width": ["get", "width"],
-          "line-dasharray": [4, 3],
-          "line-opacity": 0.6,
+          "line-color": "#ef4444",
+          "line-width": 3,
+          "line-opacity": 0.8,
         }}
       />
     </Source>
