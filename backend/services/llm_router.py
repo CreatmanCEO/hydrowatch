@@ -39,7 +39,7 @@ def create_router() -> Router:
                 "api_key": settings.cerebras_api_key.get_secret_value(),
             },
         },
-        # Pool B — complex tasks (Anthropic primary, Gemini fallback)
+        # Pool B — complex tasks (Anthropic → Gemini → Cerebras fallback chain)
         {
             "model_name": "pool-b",
             "litellm_params": {
@@ -55,10 +55,25 @@ def create_router() -> Router:
             },
         },
         {
+            "model_name": "pool-b",
+            "litellm_params": {
+                "model": settings.model_pool_a_fallback,
+                "api_key": settings.cerebras_api_key.get_secret_value(),
+            },
+        },
+        # Pool B upgrade — same fallback chain
+        {
             "model_name": "pool-b-upgrade",
             "litellm_params": {
                 "model": settings.model_pool_b_complex,
                 "api_key": settings.anthropic_api_key.get_secret_value(),
+            },
+        },
+        {
+            "model_name": "pool-b-upgrade",
+            "litellm_params": {
+                "model": settings.model_pool_a_primary,
+                "api_key": settings.gemini_api_key.get_secret_value(),
             },
         },
     ]

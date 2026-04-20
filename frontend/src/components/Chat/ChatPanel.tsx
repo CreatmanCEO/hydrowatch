@@ -82,20 +82,51 @@ export function ChatPanel() {
           {/* Messages */}
           <div className="flex-1 overflow-y-auto px-4 py-3 space-y-1">
             {messages.length === 0 && !streamingText && (
-              <div className="text-center text-gray-400 text-sm mt-8">
-                <p className="mb-3">Ask about wells, anomalies, or upload CSV data.</p>
-                <div className="space-y-2 text-xs">
+              <div className="px-2 py-4">
+                {/* Welcome message styled as assistant bubble */}
+                <div className="flex justify-start mb-4">
+                  <div className="max-w-[92%] bg-gray-100 text-gray-900 rounded-2xl rounded-bl-md px-4 py-3">
+                    <p className="text-sm font-medium mb-2">Welcome to HydroWatch AI</p>
+                    <p className="text-sm text-gray-600 mb-3">
+                      I am your groundwater monitoring assistant for the Abu Dhabi aquifer network.
+                      I can analyze 25 monitoring wells across 4 clusters in real time.
+                    </p>
+
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-2">What I can do:</p>
+                    <ul className="text-sm text-gray-600 space-y-1 mb-3">
+                      <li>&#x1F4CD; Query wells by location, status, or cluster</li>
+                      <li>&#x26A0;&#xFE0F; Detect anomalies: debit decline, TDS spikes, sensor faults</li>
+                      <li>&#x1F4C8; Analyze time series trends for any parameter</li>
+                      <li>&#x1F4CA; Regional statistics for the current viewport</li>
+                      <li>&#x1F4C4; Validate uploaded CSV observation files</li>
+                    </ul>
+
+                    <p className="text-xs font-medium text-gray-500 uppercase mb-2">How to use:</p>
+                    <ul className="text-xs text-gray-500 space-y-1 mb-3">
+                      <li>&bull; Click a well on the map &mdash; I&apos;ll see which one you selected</li>
+                      <li>&bull; Pan/zoom the map &mdash; I know your current viewport</li>
+                      <li>&bull; Toggle layers (Wells, Depression Cones) in the top-right panel</li>
+                      <li>&bull; Upload CSV via the <strong>CSV</strong> button above</li>
+                      <li>&bull; View model metrics via the <strong>Metrics</strong> button</li>
+                    </ul>
+                  </div>
+                </div>
+
+                {/* Quick action suggestions */}
+                <p className="text-xs text-gray-400 text-center mb-2">Try asking:</p>
+                <div className="flex flex-wrap gap-2 justify-center">
                   {[
                     "Show anomalies in the viewport",
-                    "What is the status of well AUH-01-003?",
-                    "Region statistics for visible area",
+                    "Status of well AUH-01-003",
+                    "Region statistics",
+                    "Which wells have high TDS?",
                   ].map((suggestion) => (
                     <button
                       key={suggestion}
                       onClick={() => setInput(suggestion)}
-                      className="block mx-auto text-gray-400 hover:text-blue-500 transition-colors cursor-pointer"
+                      className="text-xs px-3 py-1.5 rounded-full border border-gray-200 text-gray-500 hover:border-blue-400 hover:text-blue-600 transition-colors"
                     >
-                      &rarr; {suggestion}
+                      {suggestion}
                     </button>
                   ))}
                 </div>
