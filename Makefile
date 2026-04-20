@@ -29,6 +29,12 @@ docker-up: ## Start all services via Docker Compose
 docker-down: ## Stop all services
 	docker compose down
 
+e2e: ## Run Playwright E2E tests
+	cd frontend && npx playwright test
+
+e2e-ui: ## Run Playwright E2E tests with UI
+	cd frontend && npx playwright test --ui
+
 clean: ## Remove Python cache files
 	find . -type d -name __pycache__ -exec rm -rf {} + 2>/dev/null || true
 	find . -type d -name .pytest_cache -exec rm -rf {} + 2>/dev/null || true
