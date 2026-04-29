@@ -56,7 +56,7 @@ export const useMapStore = create<MapState>()(
       wellsGeoJSON: null,
 
       coneTimeDays: 30,
-      coneMode: "selected",
+      coneMode: "all",
 
       setViewport: (latitude, longitude, zoom) =>
         set({ latitude, longitude, zoom }),

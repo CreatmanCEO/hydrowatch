@@ -10,6 +10,9 @@ import { WellPopup } from "./WellPopup";
 import { LayerControls } from "./LayerControls";
 import { DepressionConeLayer } from "./DepressionConeLayer";
 import { InterferenceLayer } from "./InterferenceLayer";
+import { TimeSlider } from "./TimeSlider";
+import { DrawdownLegend } from "./DrawdownLegend";
+import { ConeModeToggle } from "./ConeModeToggle";
 
 const MAP_STYLE = "https://tiles.openfreemap.org/styles/positron";
 
@@ -52,6 +55,7 @@ export function WellsMap() {
     wellsGeoJSON, setWellsGeoJSON,
     selectedWellId, selectWell,
     activeLayers,
+    coneTimeDays, setConeTimeDays, coneMode, setConeMode,
   } = useMapStore();
 
   const [popupWell, setPopupWell] = useState<{
@@ -106,6 +110,21 @@ export function WellsMap() {
       >
         <NavigationControl position="top-left" />
 
+        {/* Depression cone layer (Theis isolines) — render BEFORE wells so well dots stay on top */}
+        {activeLayers.includes("depression_cones") && wellsGeoJSON && (
+          <DepressionConeLayer
+            wellsGeoJSON={wellsGeoJSON}
+            selectedWellId={selectedWellId}
+            mode={coneMode}
+            tDays={coneTimeDays}
+          />
+        )}
+
+        {/* Interference lines (Theis-driven) — render BEFORE wells too */}
+        {activeLayers.includes("interference") && wellsGeoJSON && bounds && (
+          <InterferenceLayer wellsGeoJSON={wellsGeoJSON} bbox={bounds} />
+        )}
+
         {wellsGeoJSON && activeLayers.includes("wells") && (
           <Source id="wells" type="geojson" data={wellsGeoJSON}>
             {/* Circle layer */}
@@ -151,16 +170,6 @@ export function WellsMap() {
           </Source>
         )}
 
-        {/* Depression cone layer */}
-        {activeLayers.includes("depression_cones") && wellsGeoJSON && (
-          <DepressionConeLayer wellsGeoJSON={wellsGeoJSON} />
-        )}
-
-        {/* Interference lines (Theis-driven) */}
-        {activeLayers.includes("interference") && wellsGeoJSON && bounds && (
-          <InterferenceLayer wellsGeoJSON={wellsGeoJSON} bbox={bounds} />
-        )}
-
         {/* Well popup */}
         {popupWell && (
           <WellPopup
@@ -177,6 +186,19 @@ export function WellsMap() {
 
       {/* Layer controls overlay */}
       <LayerControls />
+
+      {/* Cone controls + legend (only when depression cones active) */}
+      {activeLayers.includes("depression_cones") && (
+        <>
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex gap-2">
+            <ConeModeToggle value={coneMode} onChange={setConeMode} />
+            <TimeSlider value={coneTimeDays} onChange={setConeTimeDays} />
+          </div>
+          <div className="absolute bottom-3 left-3 z-10">
+            <DrawdownLegend tDays={coneTimeDays} />
+          </div>
+        </>
+      )}
     </div>
   );
 }

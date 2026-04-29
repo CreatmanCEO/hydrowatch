@@ -122,6 +122,25 @@ async def api_analyze_interference(req: _InterferenceRequest):
     return result.model_dump()
 
 
+class _DrawdownRequest(_BaseModel):
+    well_id: str
+    t_days: int = 30
+    extent_km: float = 5
+    resolution: int = 50
+
+
+@app.post("/api/tools/compute_drawdown_grid", tags=["tools"])
+async def api_compute_drawdown_grid(req: _DrawdownRequest):
+    from tools.compute_drawdown_grid import compute_drawdown_grid
+    result = compute_drawdown_grid(
+        well_id=req.well_id,
+        t_days=req.t_days,
+        extent_km=req.extent_km,
+        resolution=req.resolution,
+    )
+    return result.model_dump()
+
+
 @app.get("/api/wells/{well_id}/history", tags=["wells"])
 async def get_well_history_endpoint(
     well_id: str,

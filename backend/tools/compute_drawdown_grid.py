@@ -46,6 +46,22 @@ def _meters_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 
+def _is_edge_touching(contour: np.ndarray, n: int) -> bool:
+    """True if any point of the contour lies on the outer grid boundary.
+
+    Edge-touching contours are 'open' artefacts (the cone extends beyond the
+    grid extent). Rendering them produces fake rectangular borders, so we drop
+    them — better to show nothing than a misleading grid-aligned polygon.
+    """
+    eps = 0.5
+    return bool(
+        np.any(contour[:, 0] <= eps)
+        or np.any(contour[:, 0] >= n - 1 - eps)
+        or np.any(contour[:, 1] <= eps)
+        or np.any(contour[:, 1] >= n - 1 - eps)
+    )
+
+
 def _contours_to_polygon(
     contours: list[np.ndarray],
     grid_lon: np.ndarray,
@@ -126,6 +142,7 @@ def compute_drawdown_grid(
         if level >= max_dd:
             continue
         contours = measure.find_contours(drawdown, level)
+        contours = [c for c in contours if not _is_edge_touching(c, resolution)]
         polygon = _contours_to_polygon(contours, lons, lats)
         if polygon["coordinates"]:
             isolines.append(DrawdownIsoline(level_m=level, polygon=polygon))
