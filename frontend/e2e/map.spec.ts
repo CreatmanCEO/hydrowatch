@@ -21,7 +21,8 @@ test.describe("Map", () => {
   test("layer controls panel visible", async ({ page }) => {
     await expect(page.getByText("Layers", { exact: false }).first()).toBeVisible();
     await expect(page.getByText("Wells").first()).toBeVisible();
-    await expect(page.getByText("Depression Cones").first()).toBeVisible();
+    await expect(page.getByText("Depression Cone").first()).toBeVisible();
+    await expect(page.getByText("Interference").first()).toBeVisible();
   });
 
   test("wells checkbox is checked by default", async ({ page }) => {
@@ -29,7 +30,7 @@ test.describe("Map", () => {
     await expect(wellsCheckbox).toBeChecked();
   });
 
-  test("depression cones toggle works", async ({ page }) => {
+  test("depression cone toggle works", async ({ page }) => {
     const conesCheckbox = page.locator("input[type=checkbox]").nth(1);
     await conesCheckbox.check();
     await expect(conesCheckbox).toBeChecked();
