@@ -49,6 +49,14 @@ def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
     if map_context.filters:
         lines.append(f"- Active filters: {map_context.filters}")
 
+    if "depression_cone" in map_context.active_layers:
+        lines.append(
+            f"- Depression cone layer: ON, t={map_context.depression_cone_t_days}d, "
+            f"mode={map_context.depression_cone_mode}"
+        )
+    if map_context.interference_visible or "interference" in map_context.active_layers:
+        lines.append("- Interference layer: ON (showing significant pairs from analyze_interference)")
+
     # Selected well details
     if map_context.selected_well_id:
         well = wells_data.get(map_context.selected_well_id)

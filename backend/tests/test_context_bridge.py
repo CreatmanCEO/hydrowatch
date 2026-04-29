@@ -95,3 +95,24 @@ class TestBuildContextPrompt:
         )
         prompt = build_context_prompt(ctx, wells_data)
         assert "visible" in prompt.lower() or "wells in view" in prompt.lower()
+
+
+class TestExtendedMapContext:
+    @pytest.fixture
+    def wells_data(self):
+        return load_wells_data()
+
+    def test_cone_state_in_prompt(self, wells_data):
+        ctx = MapContext(
+            center_lat=24.45, center_lng=54.65, zoom=14,
+            bbox=[54.6, 24.4, 54.7, 24.5],
+            active_layers=["wells", "depression_cone"],
+            selected_well_id=next(iter(wells_data)),
+            depression_cone_t_days=90,
+            depression_cone_mode="selected",
+            interference_visible=True,
+        )
+        prompt = build_context_prompt(ctx, wells_data)
+        assert "depression_cone" in prompt.lower() or "cone" in prompt.lower()
+        assert "90" in prompt
+        assert "interference" in prompt.lower()

@@ -15,6 +15,9 @@ class MapContext(BaseModel):
     active_layers: list[str] = Field(default_factory=lambda: ["wells"])
     selected_well_id: str | None = None
     filters: dict[str, Any] = Field(default_factory=dict)
+    depression_cone_t_days: int = 30
+    depression_cone_mode: Literal["selected", "all"] = "selected"
+    interference_visible: bool = False
 
     @field_validator("bbox")
     @classmethod
