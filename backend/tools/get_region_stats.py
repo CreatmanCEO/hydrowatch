@@ -1,4 +1,5 @@
 """Tool: Aggregate statistics for wells in a bounding box."""
+
 import json
 import os
 from pathlib import Path
@@ -6,6 +7,7 @@ from pathlib import Path
 import numpy as np
 
 from models.schemas import RegionStats
+
 
 def _get_data_dir() -> str:
     return os.environ.get("DATA_DIR", "./data")
@@ -17,7 +19,9 @@ def get_region_stats(
     """Aggregate stats for wells within bbox [west, south, east, north]."""
     path = Path(_get_data_dir()) / "wells.geojson"
     if not path.exists():
-        raise FileNotFoundError(f"Wells data not found at {path}. Run: python -m data_generator.generate_wells")
+        raise FileNotFoundError(
+            f"Wells data not found at {path}. Run: python -m data_generator.generate_wells"
+        )
     with open(path, encoding="utf-8") as f:
         geojson = json.load(f)
 

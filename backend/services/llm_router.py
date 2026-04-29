@@ -1,25 +1,27 @@
 """LLM router with two model pools via LiteLLM."""
+
 from litellm import Router
+
 from config import get_settings
 from services.prompt_engine import PromptEngine
 
 # Task → model pool routing
 TASK_ROUTING = {
-    "validate_csv":         "pool-a",
-    "query_wells":          "pool-a",
-    "get_region_stats":     "pool-a",
-    "get_well_history":     "pool-a",
-    "trend_analysis":       "pool-a",
+    "validate_csv": "pool-a",
+    "query_wells": "pool-a",
+    "get_region_stats": "pool-a",
+    "get_well_history": "pool-a",
+    "trend_analysis": "pool-a",
     "water_quality_report": "pool-a",
-    "cluster_comparison":   "pool-a",
-    "detect_anomalies":     "pool-b",
-    "interpret_anomaly":    "pool-b",
-    "interference_analysis":"pool-b",
-    "drawdown_analysis":    "pool-b",
-    "depression_analysis":  "pool-b",  # legacy alias, keep
-    "daily_report":         "pool-b",
-    "calibration_advice":   "pool-b-upgrade",
-    "general_question":     "pool-b",
+    "cluster_comparison": "pool-a",
+    "detect_anomalies": "pool-b",
+    "interpret_anomaly": "pool-b",
+    "interference_analysis": "pool-b",
+    "drawdown_analysis": "pool-b",
+    "depression_analysis": "pool-b",  # legacy alias, keep
+    "daily_report": "pool-b",
+    "calibration_advice": "pool-b-upgrade",
+    "general_question": "pool-b",
 }
 
 # Prompt engine singleton
@@ -34,26 +36,36 @@ def create_router() -> Router:
 
     model_list = [
         # Pool A — simple/medium tasks (Haiku only after Gemini Vertex 503 incidents)
-        {"model_name": "pool-a", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4.5",
-            "api_key": or_key,
-        }},
-
+        {
+            "model_name": "pool-a",
+            "litellm_params": {
+                "model": "openrouter/anthropic/claude-haiku-4.5",
+                "api_key": or_key,
+            },
+        },
         # Pool B — complex tasks (Haiku only, Gemini too unreliable for tool calling)
-        {"model_name": "pool-b", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4.5",
-            "api_key": or_key,
-        }},
-
+        {
+            "model_name": "pool-b",
+            "litellm_params": {
+                "model": "openrouter/anthropic/claude-haiku-4.5",
+                "api_key": or_key,
+            },
+        },
         # Pool B upgrade — deep reasoning
-        {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/anthropic/claude-sonnet-4.5",
-            "api_key": or_key,
-        }},
-        {"model_name": "pool-b-upgrade", "litellm_params": {
-            "model": "openrouter/anthropic/claude-haiku-4.5",
-            "api_key": or_key,
-        }},
+        {
+            "model_name": "pool-b-upgrade",
+            "litellm_params": {
+                "model": "openrouter/anthropic/claude-sonnet-4.5",
+                "api_key": or_key,
+            },
+        },
+        {
+            "model_name": "pool-b-upgrade",
+            "litellm_params": {
+                "model": "openrouter/anthropic/claude-haiku-4.5",
+                "api_key": or_key,
+            },
+        },
     ]
 
     return Router(

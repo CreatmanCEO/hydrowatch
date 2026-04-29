@@ -1,9 +1,7 @@
 """Tests for eval pipeline — metrics, dataset, schema validation."""
-import json
+
 import os
 from pathlib import Path
-
-import pytest
 
 DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "data")
 os.environ["DATA_DIR"] = DATA_DIR
@@ -11,19 +9,17 @@ os.environ.setdefault("GEMINI_API_KEY", "test-key")
 os.environ.setdefault("CEREBRAS_API_KEY", "test-key")
 os.environ.setdefault("ANTHROPIC_API_KEY", "test-key")
 
+from eval.batch_runner import estimate_cost, load_eval_dataset
 from eval.metrics import (
-    ModelMetrics,
-    validate_schema_compliance,
-    check_tool_call_accuracy,
-    check_fields_present,
-    aggregate_metrics,
     EvalResult,
+    aggregate_metrics,
+    check_fields_present,
+    check_tool_call_accuracy,
+    validate_schema_compliance,
 )
-from eval.batch_runner import load_eval_dataset, estimate_cost
 
 
 class TestEvalDataset:
-
     def test_dataset_loads(self):
         cases = load_eval_dataset()
         assert len(cases) >= 40
@@ -39,7 +35,13 @@ class TestEvalDataset:
     def test_categories_covered(self):
         cases = load_eval_dataset()
         categories = {c["category"] for c in cases}
-        expected = {"csv_validation", "anomaly_detection", "well_query", "region_analysis", "edge_case"}
+        expected = {
+            "csv_validation",
+            "anomaly_detection",
+            "well_query",
+            "region_analysis",
+            "edge_case",
+        }
         assert expected == categories
 
     def test_difficulty_levels(self):
@@ -51,7 +53,6 @@ class TestEvalDataset:
 
 
 class TestSchemaValidation:
-
     def test_valid_anomaly_card(self):
         output = {
             "type": "anomaly_card",
@@ -90,69 +91,93 @@ class TestSchemaValidation:
 
 
 class TestToolCallAccuracy:
-
     def test_correct_tool(self):
         assert check_tool_call_accuracy(
-            "detect_anomalies",
-            [{"name": "detect_anomalies", "arguments": "{}"}]
+            "detect_anomalies", [{"name": "detect_anomalies", "arguments": "{}"}]
         )
 
     def test_wrong_tool(self):
         assert not check_tool_call_accuracy(
-            "detect_anomalies",
-            [{"name": "query_wells", "arguments": "{}"}]
+            "detect_anomalies", [{"name": "query_wells", "arguments": "{}"}]
         )
 
     def test_no_tool_expected_none_called(self):
         assert check_tool_call_accuracy(None, [])
 
     def test_no_tool_expected_but_called(self):
-        assert not check_tool_call_accuracy(
-            None,
-            [{"name": "query_wells", "arguments": "{}"}]
-        )
+        assert not check_tool_call_accuracy(None, [{"name": "query_wells", "arguments": "{}"}])
 
     def test_expected_tool_none_called(self):
         assert not check_tool_call_accuracy("detect_anomalies", [])
 
 
 class TestFieldsPresent:
-
     def test_fields_in_dict(self):
         assert check_fields_present(
             ["severity", "well_id"],
-            {"severity": "high", "well_id": "AUH-01-003", "extra": "data"}
+            {"severity": "high", "well_id": "AUH-01-003", "extra": "data"},
         )
 
     def test_missing_field(self):
-        assert not check_fields_present(
-            ["severity", "missing_field"],
-            {"severity": "high"}
-        )
+        assert not check_fields_present(["severity", "missing_field"], {"severity": "high"})
 
     def test_empty_expected(self):
         assert check_fields_present([], {"any": "data"})
 
     def test_list_output(self):
         assert check_fields_present(
-            ["severity"],
-            [{"severity": "high", "well_id": "X"}, {"severity": "low"}]
+            ["severity"], [{"severity": "high", "well_id": "X"}, {"severity": "low"}]
         )
 
 
 class TestAggregateMetrics:
-
     def test_aggregate(self):
         results = [
-            EvalResult("c1", "model-a", "input1", "detect_anomalies",
-                       [{"name": "detect_anomalies"}], {}, True, True, True,
-                       150, 100, 50, 0.001),
-            EvalResult("c2", "model-a", "input2", "query_wells",
-                       [{"name": "query_wells"}], {}, True, False, True,
-                       200, 120, 60, 0.002),
-            EvalResult("c3", "model-b", "input3", "detect_anomalies",
-                       [{"name": "detect_anomalies"}], {}, True, True, True,
-                       300, 200, 100, 0.01),
+            EvalResult(
+                "c1",
+                "model-a",
+                "input1",
+                "detect_anomalies",
+                [{"name": "detect_anomalies"}],
+                {},
+                True,
+                True,
+                True,
+                150,
+                100,
+                50,
+                0.001,
+            ),
+            EvalResult(
+                "c2",
+                "model-a",
+                "input2",
+                "query_wells",
+                [{"name": "query_wells"}],
+                {},
+                True,
+                False,
+                True,
+                200,
+                120,
+                60,
+                0.002,
+            ),
+            EvalResult(
+                "c3",
+                "model-b",
+                "input3",
+                "detect_anomalies",
+                [{"name": "detect_anomalies"}],
+                {},
+                True,
+                True,
+                True,
+                300,
+                200,
+                100,
+                0.01,
+            ),
         ]
         metrics = aggregate_metrics(results)
 
@@ -165,7 +190,6 @@ class TestAggregateMetrics:
 
 
 class TestCostEstimation:
-
     def test_gemini_flash_cost(self):
         cost = estimate_cost("gemini/gemini-2.5-flash", 1000, 500)
         assert cost > 0

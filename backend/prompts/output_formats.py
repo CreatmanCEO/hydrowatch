@@ -8,7 +8,6 @@ OUTPUT_FORMATS = {
 - Use tables for comparing multiple wells
 - Keep paragraphs short (2-3 sentences max)
 """,
-
     "anomaly_card": """## Output Format: Anomaly Card (JSON)
 When reporting anomalies, return a JSON object matching this schema:
 ```json
@@ -31,7 +30,6 @@ Severity thresholds:
 - medium: monitor closely, schedule inspection
 - low: note for records, continue normal monitoring
 """,
-
     "validation_card": """## Output Format: Validation Result (JSON)
 When reporting CSV validation results, return JSON matching this schema:
 ```json
@@ -50,7 +48,6 @@ When reporting CSV validation results, return JSON matching this schema:
 - errors: data that is definitely wrong (negative flows, pH=15)
 - warnings: data that is suspicious but physically possible
 """,
-
     "region_stats": """## Output Format: Region Statistics
 Present as a structured summary with:
 - Well count and status breakdown
@@ -58,7 +55,6 @@ Present as a structured summary with:
 - Any flagged concerns
 Use markdown tables for multi-cluster comparisons.
 """,
-
     "interference_card": """## Output Format: Interference Card (JSON)
 Return JSON matching InterferenceCard schema:
 ```json
@@ -73,7 +69,6 @@ Return JSON matching InterferenceCard schema:
 }
 ```
 """,
-
     "drawdown_card": """## Output Format: Drawdown Card (JSON)
 Return JSON matching DrawdownCard schema:
 ```json

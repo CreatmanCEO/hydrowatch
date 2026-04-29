@@ -1,11 +1,11 @@
 """Tests for well GeoJSON generation."""
+
 import json
-import pytest
+
 from data_generator.generate_wells import generate_wells_geojson
 
 
 class TestWellGeneration:
-
     def test_generates_correct_count(self):
         geojson = generate_wells_geojson(n_wells=25)
         assert len(geojson["features"]) == 25

@@ -1,13 +1,13 @@
 """Tool: Detect anomalies in well time series data."""
-import json
+
 import os
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
-from scipy.stats import linregress
+import pandas as pd
 
 from models.schemas import AnomalyCard
+
 
 def _get_data_dir() -> str:
     return os.environ.get("DATA_DIR", "./data")
@@ -22,8 +22,8 @@ def _detect_debit_decline(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
         return cards
 
     # Compare first quarter vs last quarter
-    q1 = values[:n // 4]
-    q4 = values[3 * n // 4:]
+    q1 = values[: n // 4]
+    q4 = values[3 * n // 4 :]
     mean_q1 = float(np.mean(q1))
     mean_q4 = float(np.mean(q4))
 
@@ -31,21 +31,25 @@ def _detect_debit_decline(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
         change_pct = (mean_q4 - mean_q1) / mean_q1 * 100
         if change_pct < -15:  # >15% decline
             severity = "critical" if change_pct < -40 else "high" if change_pct < -25 else "medium"
-            cards.append(AnomalyCard(
-                severity=severity,
-                well_id=well_id,
-                anomaly_type="debit_decline",
-                title=f"Debit decline: {change_pct:.1f}%",
-                description=f"Flow rate declined from {mean_q1:.1f} to {mean_q4:.1f} L/s over observation period",
-                value_current=round(mean_q4, 2),
-                value_baseline=round(mean_q1, 2),
-                change_pct=round(change_pct, 1),
-                recommendation=(
-                    "URGENT: Immediate well rehabilitation required. Consider reducing pumping rate." if change_pct < -40
-                    else "Schedule pump test and well assessment within 2 weeks." if change_pct < -25
-                    else "Monitor closely. Schedule inspection if decline continues."
-                ),
-            ))
+            cards.append(
+                AnomalyCard(
+                    severity=severity,
+                    well_id=well_id,
+                    anomaly_type="debit_decline",
+                    title=f"Debit decline: {change_pct:.1f}%",
+                    description=f"Flow rate declined from {mean_q1:.1f} to {mean_q4:.1f} L/s over observation period",
+                    value_current=round(mean_q4, 2),
+                    value_baseline=round(mean_q1, 2),
+                    change_pct=round(change_pct, 1),
+                    recommendation=(
+                        "URGENT: Immediate well rehabilitation required. Consider reducing pumping rate."
+                        if change_pct < -40
+                        else "Schedule pump test and well assessment within 2 weeks."
+                        if change_pct < -25
+                        else "Monitor closely. Schedule inspection if decline continues."
+                    ),
+                )
+            )
     return cards
 
 
@@ -72,17 +76,19 @@ def _detect_tds_spike(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
         change_pct = (spike_max - baseline) / baseline * 100 if baseline > 0 else 0
 
         severity = "high" if change_pct > 50 else "medium" if change_pct > 20 else "low"
-        cards.append(AnomalyCard(
-            severity=severity,
-            well_id=well_id,
-            anomaly_type="tds_spike",
-            title=f"TDS spike detected: {spike_max:.0f} mg/L",
-            description=f"TDS spiked to {spike_max:.0f} from baseline {baseline:.0f} mg/L ({change_pct:.1f}% increase)",
-            value_current=round(spike_max, 1),
-            value_baseline=round(baseline, 1),
-            change_pct=round(change_pct, 1),
-            recommendation="Investigate potential contamination source; collect confirmation samples",
-        ))
+        cards.append(
+            AnomalyCard(
+                severity=severity,
+                well_id=well_id,
+                anomaly_type="tds_spike",
+                title=f"TDS spike detected: {spike_max:.0f} mg/L",
+                description=f"TDS spiked to {spike_max:.0f} from baseline {baseline:.0f} mg/L ({change_pct:.1f}% increase)",
+                value_current=round(spike_max, 1),
+                value_baseline=round(baseline, 1),
+                change_pct=round(change_pct, 1),
+                recommendation="Investigate potential contamination source; collect confirmation samples",
+            )
+        )
     return cards
 
 
@@ -105,17 +111,21 @@ def _detect_sensor_fault(df: pd.DataFrame, well_id: str) -> list[AnomalyCard]:
                 zero_runs = 0
 
         if max_run >= 5:
-            cards.append(AnomalyCard(
-                severity="medium",
-                well_id=well_id,
-                anomaly_type="sensor_fault",
-                title=f"Sensor fault in {col}",
-                description=f"{col} shows {max_run} consecutive zero readings — likely sensor malfunction",
-                value_current=0.0,
-                value_baseline=round(float(np.mean(values[values != 0])), 2) if (values != 0).any() else 0.0,
-                change_pct=-100.0,
-                recommendation=f"Deploy field team to inspect and replace faulty {col} sensor.",
-            ))
+            cards.append(
+                AnomalyCard(
+                    severity="medium",
+                    well_id=well_id,
+                    anomaly_type="sensor_fault",
+                    title=f"Sensor fault in {col}",
+                    description=f"{col} shows {max_run} consecutive zero readings — likely sensor malfunction",
+                    value_current=0.0,
+                    value_baseline=round(float(np.mean(values[values != 0])), 2)
+                    if (values != 0).any()
+                    else 0.0,
+                    change_pct=-100.0,
+                    recommendation=f"Deploy field team to inspect and replace faulty {col} sensor.",
+                )
+            )
     return cards
 
 
@@ -161,16 +171,18 @@ def detect_anomalies(well_id: str | None = None) -> list[AnomalyCard]:
         summary = ", ".join(f"{v} {k}" for k, v in by_severity.items())
         # Keep top 10, add summary card
         cards = cards[:10]
-        cards.append(AnomalyCard(
-            severity="low",
-            well_id="NETWORK",
-            anomaly_type="debit_decline",
-            title=f"Network summary: {total} anomalies detected",
-            description=f"Showing top 10 by severity. Total breakdown: {summary}.",
-            value_current=0,
-            value_baseline=0,
-            change_pct=0,
-            recommendation="Use 'detect_anomalies' on individual wells for detailed analysis.",
-        ))
+        cards.append(
+            AnomalyCard(
+                severity="low",
+                well_id="NETWORK",
+                anomaly_type="debit_decline",
+                title=f"Network summary: {total} anomalies detected",
+                description=f"Showing top 10 by severity. Total breakdown: {summary}.",
+                value_current=0,
+                value_baseline=0,
+                change_pct=0,
+                recommendation="Use 'detect_anomalies' on individual wells for detailed analysis.",
+            )
+        )
 
     return cards

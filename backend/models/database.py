@@ -1,12 +1,21 @@
 """SQLAlchemy ORM models with PostGIS geometry."""
+
 from datetime import datetime
+
+from geoalchemy2 import Geometry
 from sqlalchemy import (
-    String, Float, Integer, DateTime, Boolean, Text,
-    ForeignKey, Index, func,
+    Boolean,
+    DateTime,
+    Float,
+    ForeignKey,
+    Index,
+    Integer,
+    String,
+    Text,
+    func,
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
-from geoalchemy2 import Geometry
 
 
 class Base(DeclarativeBase):
@@ -15,6 +24,7 @@ class Base(DeclarativeBase):
 
 class Well(Base):
     """Monitoring well with PostGIS geometry."""
+
     __tablename__ = "wells"
 
     id: Mapped[str] = mapped_column(String(20), primary_key=True)  # e.g. "AUH-01-003"
@@ -52,17 +62,20 @@ class Well(Base):
     properties: Mapped[dict] = mapped_column(JSONB, default=dict)
 
     # Relationships
-    observations: Mapped[list["Observation"]] = relationship(back_populates="well", cascade="all, delete-orphan")
-    anomalies: Mapped[list["Anomaly"]] = relationship(back_populates="well", cascade="all, delete-orphan")
+    observations: Mapped[list["Observation"]] = relationship(
+        back_populates="well", cascade="all, delete-orphan"
+    )
+    anomalies: Mapped[list["Anomaly"]] = relationship(
+        back_populates="well", cascade="all, delete-orphan"
+    )
 
     # Spatial index
-    __table_args__ = (
-        Index("idx_wells_geometry", "geometry", postgresql_using="gist"),
-    )
+    __table_args__ = (Index("idx_wells_geometry", "geometry", postgresql_using="gist"),)
 
 
 class Observation(Base):
     """Time series observation for a well."""
+
     __tablename__ = "observations"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -78,13 +91,12 @@ class Observation(Base):
 
     well: Mapped["Well"] = relationship(back_populates="observations")
 
-    __table_args__ = (
-        Index("idx_obs_well_time", "well_id", "timestamp"),
-    )
+    __table_args__ = (Index("idx_obs_well_time", "well_id", "timestamp"),)
 
 
 class Anomaly(Base):
     """Detected anomaly record."""
+
     __tablename__ = "anomalies"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -106,6 +118,7 @@ class Anomaly(Base):
 
 class ChatMessage(Base):
     """Chat history."""
+
     __tablename__ = "chat_messages"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -123,6 +136,7 @@ class ChatMessage(Base):
 
 class EvalResult(Base):
     """Batch evaluation results."""
+
     __tablename__ = "eval_results"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
@@ -143,6 +157,7 @@ class EvalResult(Base):
 
 class LLMMetric(Base):
     """Per-request LLM metrics for observability."""
+
     __tablename__ = "llm_metrics"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)

@@ -1,14 +1,20 @@
 """Tool: Validate an uploaded CSV file with groundwater observations."""
+
 from pathlib import Path
 
 import pandas as pd
-import numpy as np
 
 from models.schemas import ValidationResult
 
 EXPECTED_COLUMNS = [
-    "timestamp", "well_id", "debit_ls", "tds_mgl",
-    "ph", "chloride_mgl", "water_level_m", "temperature_c",
+    "timestamp",
+    "well_id",
+    "debit_ls",
+    "tds_mgl",
+    "ph",
+    "chloride_mgl",
+    "water_level_m",
+    "temperature_c",
 ]
 
 VALID_RANGES = {
@@ -35,7 +41,9 @@ def validate_csv(
     path = Path(file_path)
     if not path.exists():
         return ValidationResult(
-            valid=False, total_rows=0, valid_rows=0,
+            valid=False,
+            total_rows=0,
+            valid_rows=0,
             errors=[f"File not found: {path.name}"],
         )
 
@@ -43,7 +51,9 @@ def validate_csv(
         df = pd.read_csv(file_path)
     except Exception as e:
         return ValidationResult(
-            valid=False, total_rows=0, valid_rows=0,
+            valid=False,
+            total_rows=0,
+            valid_rows=0,
             errors=[f"Error reading CSV: {str(e)}"],
         )
 

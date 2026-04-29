@@ -1,4 +1,5 @@
 """Tests for tool registry and safe executor."""
+
 import os
 from pathlib import Path
 
@@ -9,16 +10,20 @@ os.environ["DATA_DIR"] = DATA_DIR
 
 from models.tool_schemas import TOOL_DEFINITIONS
 from services.tool_executor import ToolExecutor
-from models.schemas import ToolResult
 
 
 class TestToolDefinitions:
-
     def test_all_tools_defined(self):
         names = {t["function"]["name"] for t in TOOL_DEFINITIONS}
-        expected = {"validate_csv", "query_wells", "detect_anomalies",
-                    "get_well_history", "get_region_stats",
-                    "analyze_interference", "compute_drawdown_grid"}
+        expected = {
+            "validate_csv",
+            "query_wells",
+            "detect_anomalies",
+            "get_well_history",
+            "get_region_stats",
+            "analyze_interference",
+            "compute_drawdown_grid",
+        }
         assert expected == names
 
     def test_new_tools_present(self):
@@ -47,7 +52,6 @@ class TestToolDefinitions:
 
 
 class TestToolExecutor:
-
     @pytest.fixture
     def executor(self):
         return ToolExecutor()
@@ -58,15 +62,11 @@ class TestToolExecutor:
         assert isinstance(result.result, (dict, list))
 
     def test_execute_query_wells_with_bbox(self, executor):
-        result = executor.execute("query_wells", {
-            "bbox": [54.0, 24.0, 56.0, 25.0]
-        })
+        result = executor.execute("query_wells", {"bbox": [54.0, 24.0, 56.0, 25.0]})
         assert result.success
 
     def test_execute_get_region_stats(self, executor):
-        result = executor.execute("get_region_stats", {
-            "bbox": [54.0, 24.0, 56.0, 25.0]
-        })
+        result = executor.execute("get_region_stats", {"bbox": [54.0, 24.0, 56.0, 25.0]})
         assert result.success
         assert "well_count" in result.result
 
@@ -80,9 +80,7 @@ class TestToolExecutor:
         assert result.error is not None
 
     def test_execute_catches_exceptions(self, executor):
-        result = executor.execute("get_well_history", {
-            "well_id": "NONEXISTENT-WELL-999"
-        })
+        result = executor.execute("get_well_history", {"well_id": "NONEXISTENT-WELL-999"})
         assert not result.success
         assert result.error is not None
 

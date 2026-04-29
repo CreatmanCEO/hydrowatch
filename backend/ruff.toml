@@ -1,0 +1,14 @@
+line-length = 100
+
+[lint]
+# Default rule set: pycodestyle errors (E), pyflakes (F), isort (I)
+# Add only what we want enforced beyond defaults.
+select = ["E", "F", "I", "W"]
+
+# E501 (line too long) handled by formatter; ignore for runtime check
+ignore = ["E501"]
+
+[lint.per-file-ignores]
+# Tests intentionally set os.environ.setdefault BEFORE importing modules
+# to bind DATA_DIR / API keys — this requires module-level statements between imports.
+"tests/**/*.py" = ["E402"]

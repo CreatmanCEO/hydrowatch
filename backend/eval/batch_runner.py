@@ -8,6 +8,7 @@ Production optimization: use Gemini Batch API (google.genai.Client.batches.creat
 for 50% cost reduction and parallel processing.
 See: https://ai.google.dev/gemini-api/docs/batch-api
 """
+
 import asyncio
 import json
 import time
@@ -15,21 +16,21 @@ from pathlib import Path
 
 import litellm
 
+from config import get_settings
 from eval.metrics import (
     EvalResult,
     aggregate_metrics,
-    check_tool_call_accuracy,
-    validate_schema_compliance,
     check_fields_present,
+    check_tool_call_accuracy,
     save_results,
+    validate_schema_compliance,
 )
-from models.tool_schemas import TOOL_DEFINITIONS
-from services.prompt_engine import PromptEngine
-from services.context_bridge import load_wells_data, build_context_prompt
-from services.tool_executor import ToolExecutor
-from services.llm_router import get_model_for_task, TASK_ROUTING
 from models.schemas import MapContext
-from config import get_settings
+from models.tool_schemas import TOOL_DEFINITIONS
+from services.context_bridge import build_context_prompt, load_wells_data
+from services.llm_router import get_model_for_task
+from services.prompt_engine import PromptEngine
+from services.tool_executor import ToolExecutor
 
 # Default map context for eval
 DEFAULT_CONTEXT = MapContext(
@@ -155,7 +156,9 @@ async def run_single_case(
     if isinstance(output, dict):
         schema_valid = validate_schema_compliance(output)
     elif isinstance(output, list) and output:
-        schema_valid = all(validate_schema_compliance(item) for item in output if isinstance(item, dict))
+        schema_valid = all(
+            validate_schema_compliance(item) for item in output if isinstance(item, dict)
+        )
 
     fields_present = check_fields_present(case.get("expected_fields", []), output)
 
@@ -236,7 +239,7 @@ async def run_eval(
         model_results = []
 
         for i, case in enumerate(cases):
-            print(f"  [{i+1}/{len(cases)}] {case['id']}: {case['input'][:50]}...")
+            print(f"  [{i + 1}/{len(cases)}] {case['id']}: {case['input'][:50]}...")
             result = await run_single_case(
                 case, model, prompt_engine, wells_data, tool_executor, settings
             )

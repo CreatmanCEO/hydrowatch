@@ -1,4 +1,5 @@
 """Tool: Theis-based drawdown grid with isoline polygons."""
+
 import json
 import math
 import os
@@ -9,7 +10,6 @@ from skimage import measure
 
 from data_generator.hydro_models import theis_drawdown
 from models.schemas import DrawdownGrid, DrawdownIsoline
-
 
 ISOLINE_LEVELS = [0.5, 1.0, 2.0, 5.0]
 DEFAULT_RESOLUTION = 50
@@ -39,10 +39,7 @@ def _meters_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> floa
     phi1, phi2 = math.radians(lat1), math.radians(lat2)
     d_phi = math.radians(lat2 - lat1)
     d_lambda = math.radians(lon2 - lon1)
-    a = (
-        math.sin(d_phi / 2) ** 2
-        + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
-    )
+    a = math.sin(d_phi / 2) ** 2 + math.cos(phi1) * math.cos(phi2) * math.sin(d_lambda / 2) ** 2
     return 2 * R * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
 

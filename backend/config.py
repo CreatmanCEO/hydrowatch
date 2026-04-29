@@ -1,7 +1,9 @@
 """Application configuration via environment variables."""
+
 from pathlib import Path
+
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings
-from pydantic import SecretStr, Field
 
 
 class Settings(BaseSettings):

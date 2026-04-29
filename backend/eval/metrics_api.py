@@ -1,4 +1,5 @@
 """Metrics API — serve latest eval results."""
+
 import json
 from pathlib import Path
 
@@ -77,10 +78,14 @@ async def get_metrics():
 async def trigger_eval():
     """Trigger eval pipeline. Runs in background."""
     import asyncio
+
     from eval.batch_runner import run_eval as _run_eval
 
     asyncio.create_task(_run_eval())
-    return {"status": "started", "message": "Eval pipeline started. Check /api/metrics for results."}
+    return {
+        "status": "started",
+        "message": "Eval pipeline started. Check /api/metrics for results.",
+    }
 
 
 @router.get("/run/status", tags=["metrics"])
@@ -101,7 +106,12 @@ async def list_models():
             "pool-a": {
                 "description": "Simple/medium tasks — mutual fallback",
                 "models": ["gemini/gemini-2.5-flash", "cerebras/llama-3.3-70b"],
-                "tasks": ["validate_csv", "query_wells", "get_region_stats", "get_well_history"],
+                "tasks": [
+                    "validate_csv",
+                    "query_wells",
+                    "get_region_stats",
+                    "get_well_history",
+                ],
             },
             "pool-b": {
                 "description": "Complex tasks — reasoning required",

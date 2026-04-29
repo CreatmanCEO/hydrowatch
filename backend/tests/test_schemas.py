@@ -1,18 +1,32 @@
 """Tests for Pydantic schemas."""
+
 import pytest
+
 from models.schemas import (
-    MapContext, WellInfo, AnomalyCard, ValidationResult,
-    ChatRequest, ChatResponse, ToolCall, ToolResult,
-    RegionStats, WellHistory,
-    InterferencePair, InterferenceResult, InterferenceCard,
-    DrawdownIsoline, DrawdownGrid, DrawdownCard,
+    AnomalyCard,
+    ChatRequest,
+    ChatResponse,
+    DrawdownCard,
+    DrawdownGrid,
+    DrawdownIsoline,
+    InterferenceCard,
+    InterferencePair,
+    InterferenceResult,
+    MapContext,
+    RegionStats,
+    ToolCall,
+    ToolResult,
+    ValidationResult,
+    WellInfo,
 )
 
 
 class TestMapContext:
     def test_valid_context(self):
         ctx = MapContext(
-            center_lat=24.45, center_lng=54.65, zoom=12,
+            center_lat=24.45,
+            center_lng=54.65,
+            zoom=12,
             bbox=[54.61, 24.42, 54.69, 24.48],
             active_layers=["wells", "depression_cone"],
             selected_well_id="AUH-01-003",
@@ -23,13 +37,19 @@ class TestMapContext:
 
     def test_bbox_validation(self):
         with pytest.raises(ValueError):
-            MapContext(center_lat=24.45, center_lng=54.65, zoom=12,
-                       bbox=[1, 2, 3],  # must be 4 elements
-                       active_layers=["wells"])
+            MapContext(
+                center_lat=24.45,
+                center_lng=54.65,
+                zoom=12,
+                bbox=[1, 2, 3],  # must be 4 elements
+                active_layers=["wells"],
+            )
 
     def test_defaults(self):
         ctx = MapContext(
-            center_lat=24.45, center_lng=54.65, zoom=10,
+            center_lat=24.45,
+            center_lng=54.65,
+            zoom=10,
             bbox=[54.0, 24.0, 55.0, 25.0],
         )
         assert ctx.active_layers == ["wells"]
@@ -57,10 +77,14 @@ class TestAnomalyCard:
         with pytest.raises(ValueError):
             AnomalyCard(
                 severity="unknown",
-                well_id="X", anomaly_type="debit_decline",
-                title="t", description="d",
-                value_current=1, value_baseline=2,
-                change_pct=-50, recommendation="r",
+                well_id="X",
+                anomaly_type="debit_decline",
+                title="t",
+                description="d",
+                value_current=1,
+                value_baseline=2,
+                change_pct=-50,
+                recommendation="r",
             )
 
 
@@ -82,11 +106,18 @@ class TestValidationResult:
 class TestWellInfo:
     def test_well_info(self):
         w = WellInfo(
-            id="AUH-01-001", name="Al Wathba Well 1",
-            cluster_id="AL_WATHBA", latitude=24.42, longitude=54.72,
-            well_depth_m=150.0, aquifer_type="Dammam Limestone",
-            status="active", current_yield_ls=12.5,
-            last_tds_mgl=4500.0, last_ph=7.8, last_water_level_m=45.0,
+            id="AUH-01-001",
+            name="Al Wathba Well 1",
+            cluster_id="AL_WATHBA",
+            latitude=24.42,
+            longitude=54.72,
+            well_depth_m=150.0,
+            aquifer_type="Dammam Limestone",
+            status="active",
+            current_yield_ls=12.5,
+            last_tds_mgl=4500.0,
+            last_ph=7.8,
+            last_water_level_m=45.0,
         )
         assert w.status == "active"
 
@@ -94,9 +125,12 @@ class TestWellInfo:
 class TestRegionStats:
     def test_region_stats(self):
         rs = RegionStats(
-            well_count=10, active_count=8,
-            avg_debit_ls=11.2, avg_tds_mgl=4200.0,
-            anomaly_count=2, wells_in_bbox=["AUH-01-001", "AUH-01-002"],
+            well_count=10,
+            active_count=8,
+            avg_debit_ls=11.2,
+            avg_tds_mgl=4200.0,
+            anomaly_count=2,
+            wells_in_bbox=["AUH-01-001", "AUH-01-002"],
         )
         assert rs.type == "region_stats"
         assert rs.well_count == 10
@@ -107,7 +141,9 @@ class TestChatModels:
         req = ChatRequest(
             message="Show anomalies in viewport",
             map_context=MapContext(
-                center_lat=24.45, center_lng=54.65, zoom=12,
+                center_lat=24.45,
+                center_lng=54.65,
+                zoom=12,
                 bbox=[54.61, 24.42, 54.69, 24.48],
             ),
         )
@@ -118,7 +154,9 @@ class TestChatModels:
             ChatRequest(
                 message="",
                 map_context=MapContext(
-                    center_lat=24.45, center_lng=54.65, zoom=12,
+                    center_lat=24.45,
+                    center_lng=54.65,
+                    zoom=12,
                     bbox=[54.0, 24.0, 55.0, 25.0],
                 ),
             )
@@ -140,9 +178,11 @@ class TestChatModels:
 class TestInterferencePair:
     def test_valid_pair(self):
         p = InterferencePair(
-            well_a="AUH-01-001", well_b="AUH-01-002",
+            well_a="AUH-01-001",
+            well_b="AUH-01-002",
             distance_km=0.22,
-            coef_at_a=0.61, coef_at_b=0.18,
+            coef_at_a=0.61,
+            coef_at_b=0.18,
             drawdown_midpoint_m=4.2,
             severity="critical",
             dominant_well="AUH-01-002",
@@ -153,10 +193,15 @@ class TestInterferencePair:
     def test_invalid_severity_rejected(self):
         with pytest.raises(ValueError):
             InterferencePair(
-                well_a="A", well_b="B", distance_km=1,
-                coef_at_a=0.1, coef_at_b=0.1,
-                drawdown_midpoint_m=1, severity="invalid",
-                dominant_well="A", recommendation="x",
+                well_a="A",
+                well_b="B",
+                distance_km=1,
+                coef_at_a=0.1,
+                coef_at_b=0.1,
+                drawdown_midpoint_m=1,
+                severity="invalid",
+                dominant_well="A",
+                recommendation="x",
             )
 
 
@@ -176,7 +221,12 @@ class TestInterferenceCard:
         c = InterferenceCard(
             pairs_summary={"critical": 2, "high": 4, "medium": 6, "low": 0},
             top_concerns=[
-                {"well_a": "A", "well_b": "B", "coef_max": 0.61, "action": "Reduce pumping at B"}
+                {
+                    "well_a": "A",
+                    "well_b": "B",
+                    "coef_max": 0.61,
+                    "action": "Reduce pumping at B",
+                }
             ],
             regional_pattern="Mussafah cluster shows correlated drawdown",
         )

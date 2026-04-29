@@ -1,4 +1,5 @@
 """Tests for compute_drawdown_grid tool."""
+
 import os
 from pathlib import Path
 
@@ -33,6 +34,7 @@ class TestComputeDrawdownGrid:
 
     def test_unknown_well_raises(self):
         import pytest
+
         with pytest.raises((FileNotFoundError, ValueError, KeyError)):
             compute_drawdown_grid(well_id="NONEXISTENT-999")
 

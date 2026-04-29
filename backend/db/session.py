@@ -1,5 +1,6 @@
 """Async SQLAlchemy session factory — lazy initialization."""
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
 _engine = None
 _session_factory = None
@@ -9,6 +10,7 @@ def get_engine():
     global _engine
     if _engine is None:
         from config import get_settings
+
         _engine = create_async_engine(get_settings().database_url, echo=False)
     return _engine
 

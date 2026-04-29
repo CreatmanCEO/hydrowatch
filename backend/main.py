@@ -1,28 +1,28 @@
 """FastAPI application — SSE chat, wells API, CSV upload, healthcheck."""
+
 import json
-import time
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import AsyncIterator
 
-from fastapi import FastAPI, UploadFile, File, HTTPException
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel as _BaseModel
 
 from config import get_settings
-from models.schemas import ChatRequest, ChatResponse, MapContext
+from eval.metrics_api import router as metrics_router
+from models.schemas import ChatRequest
+from models.tool_schemas import TOOL_DEFINITIONS
 from services.context_bridge import build_context_prompt, load_wells_data
 from services.llm_router import (
+    build_system_prompt,
     create_router,
     get_model_for_task,
-    build_system_prompt,
-    TASK_ROUTING,
 )
 from services.tool_executor import ToolExecutor
-from models.tool_schemas import TOOL_DEFINITIONS
-from eval.metrics_api import router as metrics_router
 
 settings = get_settings()
 
@@ -57,7 +57,7 @@ def _ensure_wells_loaded():
 app = FastAPI(
     title="HydroWatch API",
     description="AI-powered groundwater monitoring system for Abu Dhabi aquifer management. "
-                "Provides well monitoring, anomaly detection, and LLM-assisted analysis.",
+    "Provides well monitoring, anomaly detection, and LLM-assisted analysis.",
     version="0.1.0",
     docs_url="/docs",
     redoc_url="/redoc",
@@ -81,6 +81,7 @@ app.add_middleware(
 # Health
 # ---------------------------------------------------------------------------
 
+
 @app.get("/api/health", tags=["health"])
 async def health():
     _ensure_wells_loaded()
@@ -95,6 +96,7 @@ async def health():
 # Wells API
 # ---------------------------------------------------------------------------
 
+
 @app.get("/api/wells", tags=["wells"])
 async def get_wells():
     """Return wells GeoJSON."""
@@ -107,6 +109,7 @@ async def get_wells():
 # Theis tools (direct HTTP for frontend map layers)
 # ---------------------------------------------------------------------------
 
+
 class _InterferenceRequest(_BaseModel):
     bbox: list[float] | None = None
     t_days: int = 30
@@ -116,6 +119,7 @@ class _InterferenceRequest(_BaseModel):
 @app.post("/api/tools/analyze_interference", tags=["tools"])
 async def api_analyze_interference(req: _InterferenceRequest):
     from tools.analyze_interference import analyze_interference
+
     result = analyze_interference(
         bbox=req.bbox, t_days=req.t_days, min_coefficient=req.min_coefficient
     )
@@ -132,6 +136,7 @@ class _DrawdownRequest(_BaseModel):
 @app.post("/api/tools/compute_drawdown_grid", tags=["tools"])
 async def api_compute_drawdown_grid(req: _DrawdownRequest):
     from tools.compute_drawdown_grid import compute_drawdown_grid
+
     result = compute_drawdown_grid(
         well_id=req.well_id,
         t_days=req.t_days,
@@ -148,11 +153,14 @@ async def get_well_history_endpoint(
     last_n_days: int | None = None,
 ):
     """Return time series for a well."""
-    result = tool_executor.execute("get_well_history", {
-        "well_id": well_id,
-        "parameter": parameter,
-        "last_n_days": last_n_days,
-    })
+    result = tool_executor.execute(
+        "get_well_history",
+        {
+            "well_id": well_id,
+            "parameter": parameter,
+            "last_n_days": last_n_days,
+        },
+    )
     if not result.success:
         raise HTTPException(status_code=404, detail=result.error)
     return result.result
@@ -161,6 +169,7 @@ async def get_well_history_endpoint(
 # ---------------------------------------------------------------------------
 # CSV Upload
 # ---------------------------------------------------------------------------
+
 
 @app.post("/api/upload/csv", tags=["upload"])
 async def upload_csv(file: UploadFile = File(...)):
@@ -193,13 +202,32 @@ async def upload_csv(file: UploadFile = File(...)):
 # Chat SSE Streaming
 # ---------------------------------------------------------------------------
 
+
 def _classify_task(message: str) -> str:
     """Heuristic classifier — order matters: most specific first."""
     msg = message.lower()
 
-    if any(w in msg for w in ["depression cone", "drawdown", "isoline", "voronka", "влияние на уровень"]):
+    if any(
+        w in msg
+        for w in [
+            "depression cone",
+            "drawdown",
+            "isoline",
+            "voronka",
+            "влияние на уровень",
+        ]
+    ):
         return "drawdown_analysis"
-    if any(w in msg for w in ["interference", "competing wells", "cone overlap", "mutual influence", "wells competing"]):
+    if any(
+        w in msg
+        for w in [
+            "interference",
+            "competing wells",
+            "cone overlap",
+            "mutual influence",
+            "wells competing",
+        ]
+    ):
         return "interference_analysis"
     if any(w in msg for w in ["water quality", "drinking water", "salinity"]) or (
         "tds" in msg or "chloride" in msg or "ph levels" in msg
@@ -219,9 +247,32 @@ def _classify_task(message: str) -> str:
         return "calibration_advice"
     if any(w in msg for w in ["interpret", "why", "cause", "explain", "reason", "root cause"]):
         return "interpret_anomaly"
-    if any(w in msg for w in ["region", "area", "viewport", "overview", "stats", "summary", "report"]):
+    if any(
+        w in msg
+        for w in [
+            "region",
+            "area",
+            "viewport",
+            "overview",
+            "stats",
+            "summary",
+            "report",
+        ]
+    ):
         return "get_region_stats"
-    if any(w in msg for w in ["find", "search", "list", "wells", "query", "status", "active", "inactive"]):
+    if any(
+        w in msg
+        for w in [
+            "find",
+            "search",
+            "list",
+            "wells",
+            "query",
+            "status",
+            "active",
+            "inactive",
+        ]
+    ):
         return "query_wells"
     return "general_question"
 
@@ -265,10 +316,18 @@ async def chat_stream(request: ChatRequest):
 
             # Map non-tool task types to nearest real tool for fallback
             fallback_task = task_type
-            if task_type in ("interpret_anomaly", "calibration_advice", "general_question"):
-                fallback_task = "detect_anomalies" if task_type == "interpret_anomaly" else "query_wells"
+            if task_type in (
+                "interpret_anomaly",
+                "calibration_advice",
+                "general_question",
+            ):
+                fallback_task = (
+                    "detect_anomalies" if task_type == "interpret_anomaly" else "query_wells"
+                )
 
-            tool_result = tool_executor.execute(fallback_task, _build_tool_args(fallback_task, request))
+            tool_result = tool_executor.execute(
+                fallback_task, _build_tool_args(fallback_task, request)
+            )
             yield f"data: {json.dumps({'type': 'tool_result', 'tool': fallback_task, 'success': tool_result.success, 'result': tool_result.result})}\n\n"
             if not tool_result.success:
                 yield f"data: {json.dumps({'type': 'error', 'message': tool_result.error})}\n\n"
@@ -319,7 +378,9 @@ async def chat_stream(request: ChatRequest):
                                 if tc.function and tc.function.name:
                                     tool_calls_buffer[tc.index]["name"] = tc.function.name
                                 if tc.function and tc.function.arguments:
-                                    tool_calls_buffer[tc.index]["arguments"] += tc.function.arguments
+                                    tool_calls_buffer[tc.index]["arguments"] += (
+                                        tc.function.arguments
+                                    )
 
                 # Loop exit: LLM returned plain text without tool calls
                 if not tool_calls_buffer:
@@ -329,7 +390,11 @@ async def chat_stream(request: ChatRequest):
                 parsed_calls = []
                 for tc in tool_calls_buffer:
                     try:
-                        args = json.loads(tc["arguments"]) if isinstance(tc["arguments"], str) else tc["arguments"]
+                        args = (
+                            json.loads(tc["arguments"])
+                            if isinstance(tc["arguments"], str)
+                            else tc["arguments"]
+                        )
                     except json.JSONDecodeError:
                         args = {}
                     parsed_calls.append((tc, args))
@@ -339,27 +404,36 @@ async def chat_stream(request: ChatRequest):
                 for tc, args in parsed_calls:
                     call_id = f"call_{tc['name']}_{global_call_idx}"
                     global_call_idx += 1
-                    assistant_tool_calls.append({
-                        "id": call_id,
-                        "type": "function",
-                        "function": {"name": tc["name"], "arguments": json.dumps(args)},
-                    })
-                messages.append({
-                    "role": "assistant",
-                    "content": collected_content or None,
-                    "tool_calls": assistant_tool_calls,
-                })
+                    assistant_tool_calls.append(
+                        {
+                            "id": call_id,
+                            "type": "function",
+                            "function": {
+                                "name": tc["name"],
+                                "arguments": json.dumps(args),
+                            },
+                        }
+                    )
+                messages.append(
+                    {
+                        "role": "assistant",
+                        "content": collected_content or None,
+                        "tool_calls": assistant_tool_calls,
+                    }
+                )
 
                 # Execute all tools and add results
                 for atc, (tc, args) in zip(assistant_tool_calls, parsed_calls):
                     yield f"data: {json.dumps({'type': 'tool_call', 'tool': tc['name'], 'args': args})}\n\n"
                     tool_result = tool_executor.execute(tc["name"], args)
                     yield f"data: {json.dumps({'type': 'tool_result', 'tool': tc['name'], 'success': tool_result.success, 'result': tool_result.result})}\n\n"
-                    messages.append({
-                        "role": "tool",
-                        "tool_call_id": atc["id"],
-                        "content": json.dumps(tool_result.result),
-                    })
+                    messages.append(
+                        {
+                            "role": "tool",
+                            "tool_call_id": atc["id"],
+                            "content": json.dumps(tool_result.result),
+                        }
+                    )
                 # Continue loop — next iteration LLM will see all tool results
 
             else:

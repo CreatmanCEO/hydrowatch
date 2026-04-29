@@ -1,7 +1,10 @@
 """Tests for hydrogeological models."""
-import numpy as np
-import pytest
-from data_generator.hydro_models import theis_drawdown, superposition_drawdown, PumpingWell
+
+from data_generator.hydro_models import (
+    PumpingWell,
+    superposition_drawdown,
+    theis_drawdown,
+)
 
 
 class TestTheisDrawdown:
@@ -24,7 +27,7 @@ class TestTheisDrawdown:
     def test_drawdown_increases_with_rate(self):
         """Higher pumping rate = more drawdown."""
         T, S, r, t = 500.0, 0.005, 100.0, 1.0
-        s_low = theis_drawdown(Q=432, T=T, S=S, r=r, t=t)   # 5 L/s
+        s_low = theis_drawdown(Q=432, T=T, S=S, r=r, t=t)  # 5 L/s
         s_high = theis_drawdown(Q=1728, T=T, S=S, r=r, t=t)  # 20 L/s
         assert s_high > s_low
 
@@ -34,7 +37,7 @@ class TestTheisDrawdown:
     def test_realistic_abu_dhabi_values(self):
         """Drawdown should be in realistic range for Abu Dhabi wells."""
         Q = 10 * 86.4  # 10 L/s -> m3/day
-        T = 500         # m2/day (limestone)
+        T = 500  # m2/day (limestone)
         S = 0.005
         s = theis_drawdown(Q, T, S, r=50, t=30)
         assert 1.0 < s < 20.0  # realistic range

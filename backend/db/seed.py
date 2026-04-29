@@ -1,16 +1,17 @@
 """Seed database from generated GeoJSON and CSV files."""
+
 import asyncio
 import json
 from pathlib import Path
 
 import pandas as pd
-from sqlalchemy import delete
-from sqlalchemy.ext.asyncio import AsyncSession
 from geoalchemy2.shape import from_shape
 from shapely.geometry import shape
+from sqlalchemy import delete
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from models.database import Base, Well, Observation
 from db.session import get_engine, get_session_factory
+from models.database import Base, Observation, Well
 
 
 async def seed_wells(session: AsyncSession, geojson_path: str):

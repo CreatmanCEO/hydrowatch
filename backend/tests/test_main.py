@@ -1,11 +1,12 @@
 """Tests for FastAPI main app endpoints."""
+
 import json
 import os
 from pathlib import Path
 
 import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+from httpx import ASGITransport, AsyncClient
 
 DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "data")
 os.environ["DATA_DIR"] = DATA_DIR
@@ -27,7 +28,6 @@ async def client():
 
 
 class TestHealthEndpoint:
-
     async def test_health_ok(self, client):
         resp = await client.get("/api/health")
         assert resp.status_code == 200
@@ -37,7 +37,6 @@ class TestHealthEndpoint:
 
 
 class TestWellsEndpoint:
-
     async def test_get_wells_geojson(self, client):
         resp = await client.get("/api/wells")
         assert resp.status_code == 200
@@ -63,7 +62,6 @@ class TestWellsEndpoint:
 
 
 class TestCSVUpload:
-
     async def test_upload_valid_csv(self, client):
         # Use a real observation CSV
         obs_dir = Path(DATA_DIR) / "observations"
@@ -88,17 +86,19 @@ class TestCSVUpload:
 
 
 class TestChatStream:
-
     async def test_stream_returns_sse(self, client):
-        resp = await client.post("/api/chat/stream", json={
-            "message": "Show me all wells",
-            "map_context": {
-                "center_lat": 24.45,
-                "center_lng": 54.65,
-                "zoom": 10,
-                "bbox": [54.0, 24.0, 56.0, 25.0],
+        resp = await client.post(
+            "/api/chat/stream",
+            json={
+                "message": "Show me all wells",
+                "map_context": {
+                    "center_lat": 24.45,
+                    "center_lng": 54.65,
+                    "zoom": 10,
+                    "bbox": [54.0, 24.0, 56.0, 25.0],
+                },
             },
-        })
+        )
         assert resp.status_code == 200
         assert "text/event-stream" in resp.headers["content-type"]
 
@@ -116,43 +116,51 @@ class TestChatStream:
         wells_resp = await client.get("/api/wells")
         well_id = wells_resp.json()["features"][0]["properties"]["id"]
 
-        resp = await client.post("/api/chat/stream", json={
-            "message": "What anomalies does this well have?",
-            "map_context": {
-                "center_lat": 24.45,
-                "center_lng": 54.65,
-                "zoom": 14,
-                "bbox": [54.6, 24.4, 54.7, 24.5],
-                "selected_well_id": well_id,
+        resp = await client.post(
+            "/api/chat/stream",
+            json={
+                "message": "What anomalies does this well have?",
+                "map_context": {
+                    "center_lat": 24.45,
+                    "center_lng": 54.65,
+                    "zoom": 14,
+                    "bbox": [54.6, 24.4, 54.7, 24.5],
+                    "selected_well_id": well_id,
+                },
             },
-        })
+        )
         assert resp.status_code == 200
 
 
 class TestTaskClassifier:
     def test_classifies_interference(self):
         from main import _classify_task
+
         assert _classify_task("Check well interference patterns") == "interference_analysis"
         assert _classify_task("Wells competing for water") == "interference_analysis"
         assert _classify_task("Mutual influence between wells") == "interference_analysis"
 
     def test_classifies_drawdown(self):
         from main import _classify_task
+
         assert _classify_task("Show depression cone for well X") == "drawdown_analysis"
         assert _classify_task("What is the drawdown at this well?") == "drawdown_analysis"
         assert _classify_task("Generate isolines for AUH-01-001") == "drawdown_analysis"
 
     def test_classifies_water_quality(self):
         from main import _classify_task
+
         assert _classify_task("Generate a water quality report") == "water_quality_report"
         assert _classify_task("Check TDS levels in viewport") == "water_quality_report"
 
     def test_classifies_cluster_comparison(self):
         from main import _classify_task
+
         assert _classify_task("Compare clusters") == "cluster_comparison"
         assert _classify_task("Cross-cluster comparison") == "cluster_comparison"
 
     def test_classifies_daily_report(self):
         from main import _classify_task
+
         assert _classify_task("Generate daily report") == "daily_report"
         assert _classify_task("Daily monitoring summary") == "daily_report"

@@ -8,11 +8,12 @@ Architecture:
                + Output format (per response type, ~50-100 tok)
                + Level 2 (context bridge, runtime — variable)
 """
+
 from prompts.base_role import BASE_ROLE
 from prompts.domain_knowledge import DOMAIN_KNOWLEDGE
 from prompts.model_adaptors import get_model_adaptor
-from prompts.task_instructions import get_task_instructions
 from prompts.output_formats import get_output_format
+from prompts.task_instructions import get_task_instructions
 
 
 class PromptEngine:

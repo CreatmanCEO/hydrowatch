@@ -1,5 +1,7 @@
 """Analytical groundwater models: Theis equation, superposition."""
+
 from dataclasses import dataclass
+
 import numpy as np
 from scipy.special import exp1
 
@@ -7,13 +9,14 @@ from scipy.special import exp1
 @dataclass
 class PumpingWell:
     """A pumping well with hydraulic parameters."""
+
     id: str
-    x: float            # UTM easting, meters
-    y: float            # UTM northing, meters
-    Q: float            # pumping rate, m3/day
-    T: float            # transmissivity, m2/day
-    S: float            # storativity (dimensionless)
-    start_time: float   # pumping start time, days
+    x: float  # UTM easting, meters
+    y: float  # UTM northing, meters
+    Q: float  # pumping rate, m3/day
+    T: float  # transmissivity, m2/day
+    S: float  # storativity (dimensionless)
+    start_time: float  # pumping start time, days
 
 
 def theis_drawdown(Q: float, T: float, S: float, r: float, t: float) -> float:

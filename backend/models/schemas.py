@@ -1,13 +1,15 @@
 """Pydantic models for HydroWatch API."""
-from pydantic import BaseModel, Field, field_validator
-from typing import Literal, Any
-from datetime import datetime
 
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, field_validator
 
 # --- Map Context (from frontend) ---
 
+
 class MapContext(BaseModel):
     """Current map state sent from frontend for context bridge."""
+
     center_lat: float = Field(ge=-90, le=90)
     center_lng: float = Field(ge=-180, le=180)
     zoom: float = Field(ge=0, le=22)
@@ -29,8 +31,10 @@ class MapContext(BaseModel):
 
 # --- Well Data ---
 
+
 class WellInfo(BaseModel):
     """Well information for display."""
+
     id: str
     name: str
     cluster_id: str
@@ -47,12 +51,16 @@ class WellInfo(BaseModel):
 
 # --- Structured Output Cards (LLM -> Frontend) ---
 
+
 class AnomalyCard(BaseModel):
     """Anomaly detection result card for frontend rendering."""
+
     type: Literal["anomaly_card"] = "anomaly_card"
     severity: Literal["low", "medium", "high", "critical"]
     well_id: str
-    anomaly_type: Literal["debit_decline", "depression_cone", "interference", "tds_spike", "sensor_fault"]
+    anomaly_type: Literal[
+        "debit_decline", "depression_cone", "interference", "tds_spike", "sensor_fault"
+    ]
     title: str
     description: str
     value_current: float
@@ -63,6 +71,7 @@ class AnomalyCard(BaseModel):
 
 class ValidationResult(BaseModel):
     """CSV validation result card."""
+
     type: Literal["validation_result"] = "validation_result"
     valid: bool
     total_rows: int
@@ -74,6 +83,7 @@ class ValidationResult(BaseModel):
 
 class RegionStats(BaseModel):
     """Aggregated statistics for the current viewport region."""
+
     type: Literal["region_stats"] = "region_stats"
     well_count: int
     active_count: int
@@ -85,6 +95,7 @@ class RegionStats(BaseModel):
 
 class WellHistory(BaseModel):
     """Time series data for a single well."""
+
     type: Literal["well_history"] = "well_history"
     well_id: str
     parameter: str
@@ -96,8 +107,10 @@ class WellHistory(BaseModel):
 
 # --- Chat API ---
 
+
 class ChatRequest(BaseModel):
     """Chat request from frontend."""
+
     message: str = Field(min_length=1, max_length=2000)
     map_context: MapContext
     conversation_id: str | None = None
@@ -105,12 +118,14 @@ class ChatRequest(BaseModel):
 
 class ToolCall(BaseModel):
     """A tool call made by LLM."""
+
     name: str
     arguments: dict[str, Any]
 
 
 class ToolResult(BaseModel):
     """Result of a tool execution."""
+
     tool_name: str
     success: bool
     result: dict[str, Any] | list[Any]
@@ -119,8 +134,10 @@ class ToolResult(BaseModel):
 
 # --- Interference (Theis-based) ---
 
+
 class InterferencePair(BaseModel):
     """Hydraulic interference between two wells (Theis-based)."""
+
     well_a: str
     well_b: str
     distance_km: float
@@ -134,6 +151,7 @@ class InterferencePair(BaseModel):
 
 class InterferenceResult(BaseModel):
     """Tool output: list of significant interference pairs."""
+
     type: Literal["interference_result"] = "interference_result"
     pairs: list[InterferencePair]
     t_days: int
@@ -143,6 +161,7 @@ class InterferenceResult(BaseModel):
 
 class InterferenceCard(BaseModel):
     """Frontend-rendered card summarizing interference analysis."""
+
     type: Literal["interference_card"] = "interference_card"
     pairs_summary: dict[str, int]
     top_concerns: list[dict[str, Any]]
@@ -151,14 +170,17 @@ class InterferenceCard(BaseModel):
 
 # --- Drawdown (Theis cone) ---
 
+
 class DrawdownIsoline(BaseModel):
     """One contour level of the depression cone."""
+
     level_m: float = Field(gt=0)
     polygon: dict[str, Any]  # GeoJSON MultiPolygon
 
 
 class DrawdownGrid(BaseModel):
     """Tool output: Theis drawdown grid as isoline polygons."""
+
     type: Literal["drawdown_grid"] = "drawdown_grid"
     well_id: str
     center: list[float] = Field(min_length=2, max_length=2)  # [lng, lat]
@@ -170,6 +192,7 @@ class DrawdownGrid(BaseModel):
 
 class DrawdownCard(BaseModel):
     """Frontend-rendered card summarizing depression cone analysis."""
+
     type: Literal["drawdown_card"] = "drawdown_card"
     well_id: str
     t_days: int
@@ -182,10 +205,10 @@ class DrawdownCard(BaseModel):
 
 class ChatResponse(BaseModel):
     """Full chat response (non-streaming)."""
+
     message: str
     cards: list[
-        AnomalyCard | ValidationResult | RegionStats | WellHistory
-        | InterferenceCard | DrawdownCard
+        AnomalyCard | ValidationResult | RegionStats | WellHistory | InterferenceCard | DrawdownCard
     ] = Field(default_factory=list)
     tool_calls: list[ToolCall] = Field(default_factory=list)
     model_used: str = ""

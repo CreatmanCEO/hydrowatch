@@ -1,4 +1,5 @@
 """Tests for Prompt Engine — multi-level prompt assembly."""
+
 import os
 from pathlib import Path
 
@@ -7,9 +8,9 @@ import pytest
 DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "data")
 os.environ["DATA_DIR"] = DATA_DIR
 
-from services.prompt_engine import PromptEngine
-from services.context_bridge import build_context_prompt, load_wells_data
 from models.schemas import MapContext
+from services.context_bridge import build_context_prompt, load_wells_data
+from services.prompt_engine import PromptEngine
 
 
 @pytest.fixture
@@ -21,7 +22,9 @@ def engine():
 def sample_context():
     wells = load_wells_data()
     ctx = MapContext(
-        center_lat=24.45, center_lng=54.65, zoom=12,
+        center_lat=24.45,
+        center_lng=54.65,
+        zoom=12,
         bbox=[54.61, 24.42, 54.69, 24.48],
         active_layers=["wells", "depression_cone"],
         selected_well_id=next(iter(wells)),
@@ -30,7 +33,6 @@ def sample_context():
 
 
 class TestPromptLevels:
-
     def test_base_role_always_present(self, engine, sample_context):
         prompt = engine.build("pool-a", "general_question", sample_context)
         assert "HydroWatch AI" in prompt
@@ -52,7 +54,6 @@ class TestPromptLevels:
 
 
 class TestModelAdaptors:
-
     def test_pool_a_vs_pool_b_different(self, engine, sample_context):
         prompt_a = engine.build("pool-a", "general_question", sample_context)
         prompt_b = engine.build("pool-b", "general_question", sample_context)
@@ -61,7 +62,11 @@ class TestModelAdaptors:
 
     def test_pool_a_concise_style(self, engine, sample_context):
         prompt = engine.build("pool-a", "general_question", sample_context)
-        assert "concise" in prompt.lower() or "under 150 words" in prompt.lower() or "simple" in prompt.lower()
+        assert (
+            "concise" in prompt.lower()
+            or "under 150 words" in prompt.lower()
+            or "simple" in prompt.lower()
+        )
 
     def test_pool_b_analytical_style(self, engine, sample_context):
         prompt = engine.build("pool-b", "general_question", sample_context)
@@ -73,7 +78,6 @@ class TestModelAdaptors:
 
 
 class TestTaskInstructions:
-
     def test_validate_csv_instructions(self, engine, sample_context):
         prompt = engine.build("pool-a", "validate_csv", sample_context)
         assert "validation" in prompt.lower() or "data quality" in prompt.lower()
@@ -94,14 +98,17 @@ class TestTaskInstructions:
 
 
 class TestOutputFormats:
-
     def test_anomaly_card_format(self, engine, sample_context):
-        prompt = engine.build("pool-b", "detect_anomalies", sample_context, output_type="anomaly_card")
+        prompt = engine.build(
+            "pool-b", "detect_anomalies", sample_context, output_type="anomaly_card"
+        )
         assert "anomaly_card" in prompt
         assert "severity" in prompt
 
     def test_validation_card_format(self, engine, sample_context):
-        prompt = engine.build("pool-a", "validate_csv", sample_context, output_type="validation_card")
+        prompt = engine.build(
+            "pool-a", "validate_csv", sample_context, output_type="validation_card"
+        )
         assert "validation_result" in prompt
         assert "total_rows" in prompt
 
@@ -111,7 +118,6 @@ class TestOutputFormats:
 
 
 class TestWaterQualityNorms:
-
     def test_uae_standards_present(self, engine, sample_context):
         prompt = engine.build("pool-b", "detect_anomalies", sample_context)
         assert "1,000" in prompt or "1000" in prompt  # TDS drinking limit

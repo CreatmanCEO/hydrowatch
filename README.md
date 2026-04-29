@@ -1,11 +1,11 @@
 # HydroWatch
 
-[![CI](https://github.com/CreatmanCEO/hydrowatch/actions/workflows/ci.yml/badge.svg)](https://github.com/CreatmanCEO/hydrowatch/actions)
+[![Tests](https://github.com/CreatmanCEO/hydrowatch/actions/workflows/test.yml/badge.svg)](https://github.com/CreatmanCEO/hydrowatch/actions/workflows/test.yml)
+[![Lint](https://github.com/CreatmanCEO/hydrowatch/actions/workflows/lint.yml/badge.svg)](https://github.com/CreatmanCEO/hydrowatch/actions/workflows/lint.yml)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://python.org)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115-009688.svg)](https://fastapi.tiangolo.com)
 [![Next.js 15](https://img.shields.io/badge/Next.js-15-black.svg)](https://nextjs.org)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
-[![Tests](https://img.shields.io/badge/tests-154%20passing-brightgreen.svg)](#testing)
 
 **Theis-based groundwater monitoring with LLM assistant for well interference and depression cone analysis in Abu Dhabi aquifer systems.**
 

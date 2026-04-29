@@ -1,9 +1,11 @@
 """Context bridge: MapContext from frontend → LLM system prompt section."""
+
 import json
 import os
 from pathlib import Path
 
 from models.schemas import MapContext
+
 
 def _get_data_dir() -> str:
     return os.environ.get("DATA_DIR", "./data")
@@ -38,7 +40,9 @@ def _count_visible_wells(wells_data: dict, bbox: list[float]) -> list[str]:
 def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
     """Build context section for LLM system prompt from current map state."""
     lines = ["## Current Map State"]
-    lines.append(f"- Center: ({map_context.center_lat:.4f}, {map_context.center_lng:.4f}), zoom {map_context.zoom}")
+    lines.append(
+        f"- Center: ({map_context.center_lat:.4f}, {map_context.center_lng:.4f}), zoom {map_context.zoom}"
+    )
     lines.append(f"- Visible area (bbox): {map_context.bbox}")
     lines.append(f"- Active layers: {', '.join(map_context.active_layers)}")
 
@@ -55,7 +59,9 @@ def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
             f"mode={map_context.depression_cone_mode}"
         )
     if map_context.interference_visible or "interference" in map_context.active_layers:
-        lines.append("- Interference layer: ON (showing significant pairs from analyze_interference)")
+        lines.append(
+            "- Interference layer: ON (showing significant pairs from analyze_interference)"
+        )
 
     # Selected well details
     if map_context.selected_well_id:
@@ -68,7 +74,11 @@ def build_context_prompt(map_context: MapContext, wells_data: dict) -> str:
             lines.append(f"- Current yield: {well['current_yield_ls']} L/s")
             lines.append(f"- TDS: {well['last_tds_mgl']} mg/L, pH: {well['last_ph']}")
             lines.append(f"- Static water level: {well['static_water_level_m']}m")
-            lines.append(f"- Chloride: {well['last_chloride_mgl']} mg/L, Temperature: {well['last_temperature_c']}°C")
-            lines.append(f"- Transmissivity: {well['transmissivity_m2d']} m²/day, Storativity: {well['storativity']}")
+            lines.append(
+                f"- Chloride: {well['last_chloride_mgl']} mg/L, Temperature: {well['last_temperature_c']}°C"
+            )
+            lines.append(
+                f"- Transmissivity: {well['transmissivity_m2d']} m²/day, Storativity: {well['storativity']}"
+            )
 
     return "\n".join(lines)

@@ -81,7 +81,14 @@ TOOL_DEFINITIONS = [
                     },
                     "parameter": {
                         "type": "string",
-                        "enum": ["debit_ls", "tds_mgl", "ph", "chloride_mgl", "water_level_m", "temperature_c"],
+                        "enum": [
+                            "debit_ls",
+                            "tds_mgl",
+                            "ph",
+                            "chloride_mgl",
+                            "water_level_m",
+                            "temperature_c",
+                        ],
                         "description": "Which parameter to retrieve",
                         "default": "debit_ls",
                     },
@@ -125,7 +132,8 @@ TOOL_DEFINITIONS = [
                     "bbox": {
                         "type": "array",
                         "items": {"type": "number"},
-                        "minItems": 4, "maxItems": 4,
+                        "minItems": 4,
+                        "maxItems": 4,
                         "description": "[west, south, east, north] WGS84",
                     },
                     "t_days": {

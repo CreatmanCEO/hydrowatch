@@ -1,13 +1,12 @@
 """Tests for analyze_interference tool."""
+
 import os
 from pathlib import Path
-
-import pytest
 
 DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "data")
 os.environ["DATA_DIR"] = DATA_DIR
 
-from tools.analyze_interference import analyze_interference, _wgs84_distance_m
+from tools.analyze_interference import _wgs84_distance_m, analyze_interference
 
 
 class TestDistance:
@@ -53,4 +52,5 @@ class TestAnalyzeInterference:
     def test_t_days_param(self):
         r30 = analyze_interference(bbox=[54.0, 24.0, 56.0, 25.0], t_days=30)
         r90 = analyze_interference(bbox=[54.0, 24.0, 56.0, 25.0], t_days=90)
+        assert r30.t_days == 30
         assert r90.t_days == 90

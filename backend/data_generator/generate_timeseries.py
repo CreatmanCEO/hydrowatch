@@ -1,6 +1,6 @@
 """Generate synthetic time series with anomaly injection for groundwater wells."""
+
 import json
-import os
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -178,13 +178,15 @@ def generate_well_timeseries(
                 data["debit_ls"] = AnomalyInjector.gradual_decline(
                     data["debit_ls"], start, duration, decline_pct
                 )
-                anomaly_log.append({
-                    "type": "debit_decline",
-                    "start_idx": start,
-                    "duration": duration,
-                    "decline_pct": round(decline_pct, 3),
-                    "parameter": "debit_ls",
-                })
+                anomaly_log.append(
+                    {
+                        "type": "debit_decline",
+                        "start_idx": start,
+                        "duration": duration,
+                        "decline_pct": round(decline_pct, 3),
+                        "parameter": "debit_ls",
+                    }
+                )
 
             elif atype == "tds_spike":
                 spike_factor = float(rng.uniform(1.5, 3.0))
@@ -192,45 +194,48 @@ def generate_well_timeseries(
                 data["tds_mgl"] = AnomalyInjector.sudden_spike(
                     data["tds_mgl"], start, spike_dur, spike_factor
                 )
-                anomaly_log.append({
-                    "type": "tds_spike",
-                    "start_idx": start,
-                    "duration": spike_dur,
-                    "spike_factor": round(spike_factor, 2),
-                    "parameter": "tds_mgl",
-                })
+                anomaly_log.append(
+                    {
+                        "type": "tds_spike",
+                        "start_idx": start,
+                        "duration": spike_dur,
+                        "spike_factor": round(spike_factor, 2),
+                        "parameter": "tds_mgl",
+                    }
+                )
 
             elif atype == "sensor_fault":
                 fault_dur = max(duration // 5, 5)
                 data["ph"] = AnomalyInjector.sensor_fault(
                     data["ph"], start, fault_dur, fault_value=0.0
                 )
-                anomaly_log.append({
-                    "type": "sensor_fault",
-                    "start_idx": start,
-                    "duration": fault_dur,
-                    "fault_value": 0.0,
-                    "parameter": "ph",
-                })
+                anomaly_log.append(
+                    {
+                        "type": "sensor_fault",
+                        "start_idx": start,
+                        "duration": fault_dur,
+                        "fault_value": 0.0,
+                        "parameter": "ph",
+                    }
+                )
 
     # Build timestamps
     start_date = datetime(2024, 1, 1)
     hours_step = 24 // measurements_per_day
-    timestamps = [
-        start_date + timedelta(hours=i * hours_step)
-        for i in range(n_points)
-    ]
+    timestamps = [start_date + timedelta(hours=i * hours_step) for i in range(n_points)]
 
-    df = pd.DataFrame({
-        "timestamp": timestamps,
-        "well_id": well_id,
-        "debit_ls": np.round(data["debit_ls"], 3),
-        "tds_mgl": np.round(data["tds_mgl"], 1),
-        "ph": np.round(data["ph"], 2),
-        "chloride_mgl": np.round(data["chloride_mgl"], 1),
-        "water_level_m": np.round(data["water_level_m"], 2),
-        "temperature_c": np.round(data["temperature_c"], 1),
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": timestamps,
+            "well_id": well_id,
+            "debit_ls": np.round(data["debit_ls"], 3),
+            "tds_mgl": np.round(data["tds_mgl"], 1),
+            "ph": np.round(data["ph"], 2),
+            "chloride_mgl": np.round(data["chloride_mgl"], 1),
+            "water_level_m": np.round(data["water_level_m"], 2),
+            "temperature_c": np.round(data["temperature_c"], 1),
+        }
+    )
 
     return df, anomaly_log
 
@@ -274,9 +279,7 @@ def main():
     well_ids = [f["properties"]["id"] for f in geojson["features"]]
     obs_dir = data_dir / "observations"
 
-    result = generate_all_timeseries(
-        well_ids, days=365, output_dir=str(obs_dir)
-    )
+    result = generate_all_timeseries(well_ids, days=365, output_dir=str(obs_dir))
     print(f"Generated {len(result)} time series -> observations/")
 
 

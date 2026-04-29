@@ -1,23 +1,58 @@
 """Generate synthetic groundwater well GeoJSON for Abu Dhabi region."""
+
 import json
-import os
 from pathlib import Path
 
 import numpy as np
 
 # Abu Dhabi well field clusters (center lat, lon, name)
 CLUSTERS = [
-    {"id": "AL_WATHBA", "name": "Al Wathba", "center": (24.42, 54.72), "radius_deg": 0.06},
-    {"id": "MUSSAFAH", "name": "Mussafah Industrial", "center": (24.35, 54.50), "radius_deg": 0.04},
+    {
+        "id": "AL_WATHBA",
+        "name": "Al Wathba",
+        "center": (24.42, 54.72),
+        "radius_deg": 0.06,
+    },
+    {
+        "id": "MUSSAFAH",
+        "name": "Mussafah Industrial",
+        "center": (24.35, 54.50),
+        "radius_deg": 0.04,
+    },
     {"id": "SWEIHAN", "name": "Sweihan", "center": (24.48, 55.35), "radius_deg": 0.08},
-    {"id": "AL_KHATIM", "name": "Al Khatim", "center": (24.28, 55.10), "radius_deg": 0.07},
+    {
+        "id": "AL_KHATIM",
+        "name": "Al Khatim",
+        "center": (24.28, 55.10),
+        "radius_deg": 0.07,
+    },
 ]
 
 AQUIFER_TYPES = [
-    {"name": "Dammam Limestone", "depth_range": (80, 200), "T_range": (200, 1200), "S_range": (0.002, 0.008)},
-    {"name": "Umm Er Radhuma", "depth_range": (150, 350), "T_range": (100, 800), "S_range": (0.001, 0.005)},
-    {"name": "Quaternary Sand", "depth_range": (30, 80), "T_range": (50, 400), "S_range": (0.01, 0.05)},
-    {"name": "Alluvial", "depth_range": (20, 60), "T_range": (30, 300), "S_range": (0.05, 0.15)},
+    {
+        "name": "Dammam Limestone",
+        "depth_range": (80, 200),
+        "T_range": (200, 1200),
+        "S_range": (0.002, 0.008),
+    },
+    {
+        "name": "Umm Er Radhuma",
+        "depth_range": (150, 350),
+        "T_range": (100, 800),
+        "S_range": (0.001, 0.005),
+    },
+    {
+        "name": "Quaternary Sand",
+        "depth_range": (30, 80),
+        "T_range": (50, 400),
+        "S_range": (0.01, 0.05),
+    },
+    {
+        "name": "Alluvial",
+        "depth_range": (20, 60),
+        "T_range": (30, 300),
+        "S_range": (0.05, 0.15),
+    },
 ]
 
 OPERATORS = [
@@ -27,7 +62,14 @@ OPERATORS = [
     "Abu Dhabi Agriculture Authority",
 ]
 
-STATUSES = ["active", "active", "active", "active", "inactive", "maintenance"]  # weighted
+STATUSES = [
+    "active",
+    "active",
+    "active",
+    "active",
+    "inactive",
+    "maintenance",
+]  # weighted
 
 
 def generate_wells_geojson(
@@ -79,10 +121,10 @@ def generate_wells_geojson(
             status = str(rng.choice(STATUSES))
             operator = str(rng.choice(OPERATORS))
             install_year = int(rng.integers(1995, 2023))
-            install_date = f"{install_year}-{rng.integers(1,13):02d}-{rng.integers(1,29):02d}"
+            install_date = f"{install_year}-{rng.integers(1, 13):02d}-{rng.integers(1, 29):02d}"
 
-            well_id = f"AUH-{ci+1:02d}-{j+1:03d}"
-            name_en = f"{cluster['name']} Well {j+1}"
+            well_id = f"AUH-{ci + 1:02d}-{j + 1:03d}"
+            name_en = f"{cluster['name']} Well {j + 1}"
 
             feature = {
                 "type": "Feature",

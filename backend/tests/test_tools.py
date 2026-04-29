@@ -1,21 +1,21 @@
 """Tests for MCP-style tools."""
+
 import json
 import os
 from pathlib import Path
 
-import pytest
 import pandas as pd
-import numpy as np
+import pytest
 
 # Set DATA_DIR for tools before importing
 DATA_DIR = str(Path(__file__).resolve().parent.parent.parent / "data")
 os.environ["DATA_DIR"] = DATA_DIR
 
-from tools.validate_csv import validate_csv
-from tools.query_wells import query_wells
 from tools.detect_anomalies import detect_anomalies
-from tools.get_well_history import get_well_history
 from tools.get_region_stats import get_region_stats
+from tools.get_well_history import get_well_history
+from tools.query_wells import query_wells
+from tools.validate_csv import validate_csv
 
 
 @pytest.fixture
@@ -42,23 +42,24 @@ def valid_csv(data_dir, sample_well_id, tmp_path):
 @pytest.fixture
 def bad_csv(tmp_path):
     """Create a CSV with errors."""
-    df = pd.DataFrame({
-        "timestamp": ["2024-01-01", "2024-01-02", "bad-date"],
-        "well_id": ["W-001", "W-001", "W-001"],
-        "debit_ls": [10.0, -5.0, 12.0],  # negative debit
-        "tds_mgl": [4500, 4600, 4700],
-        "ph": [7.8, 7.9, 15.0],  # ph out of range
-        "chloride_mgl": [2000, 2100, 2200],
-        "water_level_m": [45.0, 46.0, 47.0],
-        "temperature_c": [32.0, 33.0, 34.0],
-    })
+    df = pd.DataFrame(
+        {
+            "timestamp": ["2024-01-01", "2024-01-02", "bad-date"],
+            "well_id": ["W-001", "W-001", "W-001"],
+            "debit_ls": [10.0, -5.0, 12.0],  # negative debit
+            "tds_mgl": [4500, 4600, 4700],
+            "ph": [7.8, 7.9, 15.0],  # ph out of range
+            "chloride_mgl": [2000, 2100, 2200],
+            "water_level_m": [45.0, 46.0, 47.0],
+            "temperature_c": [32.0, 33.0, 34.0],
+        }
+    )
     path = tmp_path / "bad.csv"
     df.to_csv(path, index=False)
     return str(path)
 
 
 class TestValidateCSV:
-
     def test_valid_csv_passes(self, valid_csv):
         result = validate_csv(valid_csv)
         assert result.valid
@@ -83,7 +84,6 @@ class TestValidateCSV:
 
 
 class TestQueryWells:
-
     def test_returns_wells(self, data_dir):
         wells = query_wells()
         assert len(wells) > 0
@@ -107,7 +107,6 @@ class TestQueryWells:
 
 
 class TestDetectAnomalies:
-
     def test_returns_anomaly_cards(self, sample_well_id):
         cards = detect_anomalies(sample_well_id)
         assert isinstance(cards, list)
@@ -121,7 +120,6 @@ class TestDetectAnomalies:
 
 
 class TestGetWellHistory:
-
     def test_returns_history(self, sample_well_id):
         history = get_well_history(sample_well_id, parameter="debit_ls")
         assert history.type == "well_history"
@@ -138,7 +136,6 @@ class TestGetWellHistory:
 
 
 class TestGetRegionStats:
-
     def test_returns_stats(self):
         stats = get_region_stats(bbox=[54.0, 24.0, 56.0, 25.0])
         assert stats.type == "region_stats"

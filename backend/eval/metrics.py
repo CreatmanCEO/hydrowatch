@@ -1,18 +1,18 @@
 """Evaluation metrics for model comparison."""
+
 import json
-import time
-from dataclasses import dataclass, field, asdict
-from pathlib import Path
+from dataclasses import asdict, dataclass, field
 
 import numpy as np
 from pydantic import ValidationError
 
-from models.schemas import AnomalyCard, ValidationResult, RegionStats, WellHistory
+from models.schemas import AnomalyCard, RegionStats, ValidationResult, WellHistory
 
 
 @dataclass
 class ModelMetrics:
     """Aggregated metrics for a single model."""
+
     model: str
     total_cases: int = 0
     # Accuracy
@@ -42,7 +42,9 @@ class ModelMetrics:
             self.accuracy = self.correct_tool_calls / self.total_cases
             self.schema_compliance = self.schema_valid_count / self.total_cases
             self.cost_per_request = self.total_cost_usd / self.total_cases
-            self.avg_tokens_per_request = (self.total_tokens_in + self.total_tokens_out) / self.total_cases
+            self.avg_tokens_per_request = (
+                self.total_tokens_in + self.total_tokens_out
+            ) / self.total_cases
             self.error_rate = self.error_count / self.total_cases
 
         if self.latencies_ms:
@@ -114,6 +116,7 @@ def check_fields_present(
 @dataclass
 class EvalResult:
     """Single evaluation result."""
+
     case_id: str
     model: str
     input_text: str

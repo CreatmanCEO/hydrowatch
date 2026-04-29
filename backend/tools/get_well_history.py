@@ -1,12 +1,14 @@
 """Tool: Get time series history for a single well with trend analysis."""
+
 import os
 from pathlib import Path
 
-import pandas as pd
 import numpy as np
+import pandas as pd
 from scipy.stats import linregress
 
 from models.schemas import WellHistory
+
 
 def _get_data_dir() -> str:
     return os.environ.get("DATA_DIR", "./data")
@@ -25,7 +27,14 @@ def get_well_history(
     df = pd.read_csv(csv_path, parse_dates=["timestamp"])
     df = df.sort_values("timestamp")
 
-    valid_params = {"debit_ls", "tds_mgl", "ph", "chloride_mgl", "water_level_m", "temperature_c"}
+    valid_params = {
+        "debit_ls",
+        "tds_mgl",
+        "ph",
+        "chloride_mgl",
+        "water_level_m",
+        "temperature_c",
+    }
     if parameter not in valid_params:
         raise KeyError(f"Unknown parameter '{parameter}'. Valid: {', '.join(sorted(valid_params))}")
 
