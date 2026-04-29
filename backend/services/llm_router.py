@@ -31,17 +31,12 @@ def create_router() -> Router:
     settings = get_settings()
 
     or_key = settings.openrouter_api_key.get_secret_value()
-    gemini_key = settings.gemini_api_key.get_secret_value()
 
     model_list = [
-        # Pool A — simple/medium tasks
+        # Pool A — simple/medium tasks (Haiku only after Gemini Vertex 503 incidents)
         {"model_name": "pool-a", "litellm_params": {
             "model": "openrouter/anthropic/claude-haiku-4.5",
             "api_key": or_key,
-        }},
-        {"model_name": "pool-a", "litellm_params": {
-            "model": "gemini/gemini-2.5-flash",
-            "api_key": gemini_key,
         }},
 
         # Pool B — complex tasks (Haiku only, Gemini too unreliable for tool calling)
