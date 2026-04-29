@@ -21,6 +21,10 @@ interface MapState {
   // Data
   wellsGeoJSON: WellsGeoJSON | null;
 
+  // Theis cone state
+  coneTimeDays: number; // 1, 7, 30, 90
+  coneMode: "selected" | "all";
+
   // Actions
   setViewport: (lat: number, lng: number, zoom: number) => void;
   setBounds: (bounds: [number, number, number, number]) => void;
@@ -28,6 +32,8 @@ interface MapState {
   selectWell: (wellId: string | null, properties?: WellProperties | null) => void;
   setWellsGeoJSON: (data: WellsGeoJSON) => void;
   setFilters: (filters: Record<string, unknown>) => void;
+  setConeTimeDays: (days: number) => void;
+  setConeMode: (mode: "selected" | "all") => void;
 
   // Derived
   getApiContext: () => MapContext;
@@ -49,6 +55,9 @@ export const useMapStore = create<MapState>()(
 
       wellsGeoJSON: null,
 
+      coneTimeDays: 30,
+      coneMode: "selected",
+
       setViewport: (latitude, longitude, zoom) =>
         set({ latitude, longitude, zoom }),
 
@@ -68,9 +77,17 @@ export const useMapStore = create<MapState>()(
 
       setFilters: (filters) => set({ filters }),
 
+      setConeTimeDays: (days) => set({ coneTimeDays: days }),
+      setConeMode: (mode) => set({ coneMode: mode }),
+
       getApiContext: () => {
         const s = get();
-        return buildMapContext(s);
+        return {
+          ...buildMapContext(s),
+          depression_cone_t_days: s.coneTimeDays,
+          depression_cone_mode: s.coneMode,
+          interference_visible: s.activeLayers.includes("interference"),
+        };
       },
     }),
     { name: "MapStore" }
