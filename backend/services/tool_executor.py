@@ -8,6 +8,8 @@ from tools.query_wells import query_wells
 from tools.detect_anomalies import detect_anomalies
 from tools.get_well_history import get_well_history
 from tools.get_region_stats import get_region_stats
+from tools.analyze_interference import analyze_interference
+from tools.compute_drawdown_grid import compute_drawdown_grid
 
 
 class ToolExecutor:
@@ -20,6 +22,8 @@ class ToolExecutor:
             "detect_anomalies": self._exec_detect_anomalies,
             "get_well_history": self._exec_get_well_history,
             "get_region_stats": self._exec_get_region_stats,
+            "analyze_interference": self._exec_analyze_interference,
+            "compute_drawdown_grid": self._exec_compute_drawdown_grid,
         }
 
     def execute(self, tool_name: str, arguments: dict[str, Any]) -> ToolResult:
@@ -88,3 +92,22 @@ class ToolExecutor:
     def _exec_get_region_stats(args: dict) -> dict:
         stats = get_region_stats(bbox=args["bbox"])
         return stats.model_dump()
+
+    @staticmethod
+    def _exec_analyze_interference(args: dict) -> dict:
+        result = analyze_interference(
+            bbox=args.get("bbox"),
+            t_days=args.get("t_days", 30),
+            min_coefficient=args.get("min_coefficient", 0.10),
+        )
+        return result.model_dump()
+
+    @staticmethod
+    def _exec_compute_drawdown_grid(args: dict) -> dict:
+        result = compute_drawdown_grid(
+            well_id=args["well_id"],
+            t_days=args.get("t_days", 30),
+            extent_km=args.get("extent_km", 5),
+            resolution=args.get("resolution", 50),
+        )
+        return result.model_dump()

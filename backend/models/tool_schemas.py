@@ -114,4 +114,49 @@ TOOL_DEFINITIONS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "analyze_interference",
+            "description": "Compute Theis-based interference between well pairs. Returns asymmetric coefficients (donor/victim relationships) and severity classification. Use for any question about well interference, depression cone overlap, mutual influence, or competing wells.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "bbox": {
+                        "type": "array",
+                        "items": {"type": "number"},
+                        "minItems": 4, "maxItems": 4,
+                        "description": "[west, south, east, north] WGS84",
+                    },
+                    "t_days": {
+                        "type": "integer",
+                        "default": 30,
+                        "description": "Pumping time horizon in days",
+                    },
+                    "min_coefficient": {
+                        "type": "number",
+                        "default": 0.10,
+                        "description": "Filter out pairs below this coefficient",
+                    },
+                },
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "compute_drawdown_grid",
+            "description": "Compute Theis depression cone (drawdown grid) around a single well, returning isoline polygons. Includes superposition from interfering wells. Use for depression cone analysis, drawdown questions, or operational risk assessment.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "well_id": {"type": "string"},
+                    "t_days": {"type": "integer", "default": 30},
+                    "extent_km": {"type": "number", "default": 5},
+                    "resolution": {"type": "integer", "default": 50},
+                },
+                "required": ["well_id"],
+            },
+        },
+    },
 ]

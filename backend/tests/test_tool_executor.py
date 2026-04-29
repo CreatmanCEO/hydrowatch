@@ -17,8 +17,14 @@ class TestToolDefinitions:
     def test_all_tools_defined(self):
         names = {t["function"]["name"] for t in TOOL_DEFINITIONS}
         expected = {"validate_csv", "query_wells", "detect_anomalies",
-                    "get_well_history", "get_region_stats"}
+                    "get_well_history", "get_region_stats",
+                    "analyze_interference", "compute_drawdown_grid"}
         assert expected == names
+
+    def test_new_tools_present(self):
+        names = {t["function"]["name"] for t in TOOL_DEFINITIONS}
+        assert "analyze_interference" in names
+        assert "compute_drawdown_grid" in names
 
     def test_valid_json_schema_structure(self):
         for tool in TOOL_DEFINITIONS:
@@ -82,5 +88,15 @@ class TestToolExecutor:
 
     def test_get_tool_definitions(self, executor):
         defs = executor.get_tool_definitions()
-        assert len(defs) == 5
+        assert len(defs) == 7
         assert all(d["type"] == "function" for d in defs)
+
+    def test_execute_analyze_interference(self, executor):
+        result = executor.execute("analyze_interference", {"bbox": [54.0, 24.0, 56.0, 25.0]})
+        assert result.success
+        assert result.result["type"] == "interference_result"
+
+    def test_execute_compute_drawdown_grid(self, executor):
+        result = executor.execute("compute_drawdown_grid", {"well_id": "AUH-01-001"})
+        assert result.success
+        assert result.result["type"] == "drawdown_grid"
