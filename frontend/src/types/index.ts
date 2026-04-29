@@ -8,6 +8,9 @@ export interface MapContext {
   active_layers: string[];
   selected_well_id: string | null;
   filters: Record<string, unknown>;
+  depression_cone_t_days?: number;
+  depression_cone_mode?: "selected" | "all";
+  interference_visible?: boolean;
 }
 
 export interface WellProperties {
@@ -89,7 +92,77 @@ export interface RegionStats {
   wells_in_bbox: string[];
 }
 
-export type StructuredCard = AnomalyCard | ValidationResult | RegionStats | WellHistory;
+// --- Theis Interference ---
+
+export type Severity = "low" | "medium" | "high" | "critical";
+
+export interface InterferencePair {
+  well_a: string;
+  well_b: string;
+  distance_km: number;
+  coef_at_a: number;
+  coef_at_b: number;
+  drawdown_midpoint_m: number;
+  severity: Severity;
+  dominant_well: string;
+  recommendation: string;
+}
+
+export interface InterferenceResult {
+  type: "interference_result";
+  pairs: InterferencePair[];
+  t_days: number;
+  wells_analyzed: number;
+  pairs_significant: number;
+}
+
+export interface InterferenceCard {
+  type: "interference_card";
+  pairs_summary: Record<string, number>;
+  top_concerns: Array<{
+    well_a: string;
+    well_b: string;
+    coef_max: number;
+    action: string;
+  }>;
+  regional_pattern: string;
+}
+
+// --- Theis Drawdown ---
+
+export interface DrawdownIsoline {
+  level_m: number;
+  polygon: GeoJSON.MultiPolygon | GeoJSON.Polygon;
+}
+
+export interface DrawdownGrid {
+  type: "drawdown_grid";
+  well_id: string;
+  center: [number, number];
+  t_days: number;
+  isolines: DrawdownIsoline[];
+  max_drawdown_m: number;
+  interfering_wells: string[];
+}
+
+export interface DrawdownCard {
+  type: "drawdown_card";
+  well_id: string;
+  t_days: number;
+  max_drawdown_m: number;
+  cone_radius_1m_km: number;
+  interfering_wells: string[];
+  assessment: string;
+  recommendation: string;
+}
+
+export type StructuredCard =
+  | AnomalyCard
+  | ValidationResult
+  | RegionStats
+  | WellHistory
+  | InterferenceCard
+  | DrawdownCard;
 
 export interface ChatMessage {
   id: string;
