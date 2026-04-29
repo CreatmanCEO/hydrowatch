@@ -58,6 +58,37 @@ Present as a structured summary with:
 - Any flagged concerns
 Use markdown tables for multi-cluster comparisons.
 """,
+
+    "interference_card": """## Output Format: Interference Card (JSON)
+Return JSON matching InterferenceCard schema:
+```json
+{
+  "type": "interference_card",
+  "pairs_summary": {"critical": 2, "high": 4, "medium": 6, "low": 0},
+  "top_concerns": [
+    {"well_a": "AUH-01-001", "well_b": "AUH-01-002", "coef_max": 0.61,
+     "action": "Reduce pumping at AUH-01-002"}
+  ],
+  "regional_pattern": "Mussafah cluster shows correlated drawdown patterns"
+}
+```
+""",
+
+    "drawdown_card": """## Output Format: Drawdown Card (JSON)
+Return JSON matching DrawdownCard schema:
+```json
+{
+  "type": "drawdown_card",
+  "well_id": "AUH-01-001",
+  "t_days": 30,
+  "max_drawdown_m": 6.8,
+  "cone_radius_1m_km": 2.3,
+  "interfering_wells": ["AUH-01-002", "AUH-01-007"],
+  "assessment": "Cone radius >2km at 1m isoline indicates excessive pumping.",
+  "recommendation": "Consider reducing pumping rate by 20% to limit aquifer depletion."
+}
+```
+""",
 }
 
 

@@ -59,4 +59,28 @@ Note: Most monitoring wells produce brackish water (TDS 2,000-8,000 mg/L) used f
 - Correlated drawdown in wells <2km apart: pumping interference
 - Depression cone radius >2km: excessive pumping, consider reducing rates
 - Use Theis superposition to quantify mutual interference
+
+## Interference & Depression Cones
+
+### How to read interference lines on the map
+- Lines connect well pairs with significant interference (>10% Theis coefficient).
+- Color gradient encodes vulnerability:
+  - RED end of line = "victim" — neighbor's drawdown dominates here (>60% of total)
+  - GREEN end = "donor" — minimally affected by neighbor
+  - YELLOW middle = balanced influence
+- Annotation "X% / Ym" shows max coefficient + combined drawdown at midpoint
+- Severity thresholds: 10-20% low, 20-40% medium, 40-60% high, >60% critical
+
+### How to read depression cone isolines
+- Concentric polygons from selected well: 0.5m, 1m, 2m, 5m drawdown levels
+- Computed via Theis equation with superposition (includes interfering wells)
+- Time slider: 1/7/30/90 days of pumping
+- 5m+ red zone = severe drawdown, well at operational limit
+- Cone radius >2km at 1m isoline = excessive pumping or low T aquifer
+
+### Theis interference rules of thumb
+- High coefficient (>40%) → wells too close OR pumping too hard OR low T aquifer
+- Asymmetric coefficients (e.g., 60% vs 18%) → bigger pumper dominates
+- Both >40% → mutual depletion, both wells at risk
+- Distance < 1km + active pumping → almost always significant interference
 """

@@ -122,3 +122,37 @@ class TestWaterQualityNorms:
         prompt = engine.build("pool-b", "detect_anomalies", sample_context)
         assert "5,000" in prompt or "5000" in prompt  # TDS alert
         assert "15%" in prompt  # debit decline threshold
+
+
+class TestNewTaskTypes:
+    def test_interference_analysis_task(self, engine, sample_context):
+        prompt = engine.build("pool-b", "interference_analysis", sample_context)
+        assert "analyze_interference" in prompt
+        assert "donor" in prompt.lower() or "victim" in prompt.lower()
+
+    def test_drawdown_analysis_task(self, engine, sample_context):
+        prompt = engine.build("pool-b", "drawdown_analysis", sample_context)
+        assert "compute_drawdown_grid" in prompt
+
+    def test_water_quality_task(self, engine, sample_context):
+        prompt = engine.build("pool-a", "water_quality_report", sample_context)
+        assert "TDS" in prompt and "UAE" in prompt
+
+    def test_cluster_comparison_task(self, engine, sample_context):
+        prompt = engine.build("pool-a", "cluster_comparison", sample_context)
+        assert "cluster" in prompt.lower()
+
+    def test_trend_analysis_task(self, engine, sample_context):
+        prompt = engine.build("pool-a", "trend_analysis", sample_context)
+        assert "trend" in prompt.lower()
+
+    def test_daily_report_task(self, engine, sample_context):
+        prompt = engine.build("pool-b", "daily_report", sample_context)
+        assert "report" in prompt.lower()
+
+
+class TestInterferenceDomain:
+    def test_interference_in_domain(self, engine, sample_context):
+        prompt = engine.build("pool-b", "interference_analysis", sample_context)
+        assert "Theis" in prompt
+        assert "gradient" in prompt.lower()

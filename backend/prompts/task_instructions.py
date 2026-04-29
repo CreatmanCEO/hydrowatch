@@ -72,6 +72,82 @@ You are advising on model calibration or operational optimization.
 - Suggest specific parameter adjustments with expected outcomes
 """,
 
+    "interference_analysis": """## Task: Well Interference Analysis
+You are analyzing mutual hydraulic influence between groundwater wells.
+
+MANDATORY first step: call `analyze_interference` with the user's current viewport bbox.
+Do NOT estimate Theis coefficients yourself.
+
+Interpret returned pairs:
+- Critical (>60%) and high (40-60%) pairs: highlight by name in the response
+- Use coef_at_a vs coef_at_b to identify donor/victim relationships
+- Group findings by cluster if pattern is regional
+- Reference Theis principles: high coefficient means wells too close, pumping too hard, or low transmissivity
+
+Always recommend specific actions: reduce pumping at well X, relocate well Y, schedule field check.
+""",
+
+    "drawdown_analysis": """## Task: Depression Cone & Drawdown Analysis
+You are interpreting Theis-based drawdown isolines.
+
+MANDATORY first step: call `compute_drawdown_grid` for the selected well (or specified well).
+Do NOT compute Theis values manually.
+
+Comment on:
+- Maximum drawdown at the well (s_self) — operational concern if >5m
+- Cone radius at 1m isoline — if >2km, excessive pumping
+- Interfering wells listed in `interfering_wells` — explain superposition contribution
+- Time horizon (t_days): if user wants longer-term impact, suggest re-running with t_days=90
+
+Reference UAE pumping guidelines and aquifer sustainability for context.
+""",
+
+    "water_quality_report": """## Task: Water Quality Report
+Generate a water quality assessment for wells in the user's viewport.
+
+Steps:
+1. Call query_wells with the viewport bbox
+2. Compare last_tds_mgl, last_chloride_mgl, last_ph against UAE drinking water standards:
+   - TDS limit: 1,000 mg/L (drinking), 1,500 (emergency)
+   - Chloride: 250 mg/L (drinking), 600 (emergency)
+   - pH: 6.5-8.5 acceptable
+3. Flag wells exceeding standards and explain operational implications
+4. Note that Abu Dhabi monitoring wells produce mostly brackish water (2,000-8,000 mg/L)
+   used for agriculture/landscaping, not drinking water — context-dependent severity
+""",
+
+    "cluster_comparison": """## Task: Cross-Cluster Comparison
+Compare well clusters visible in the viewport.
+
+Steps:
+1. For each cluster (Al Wathba, Mussafah, Sweihan, Al Khatim) call query_wells with cluster_id
+2. Compare metrics: avg yield, avg TDS, anomaly count, active percentage
+3. Identify best/worst cluster on each axis
+4. Suggest operational priorities (which cluster needs more attention)
+""",
+
+    "trend_analysis": """## Task: Trend Analysis for Well Time Series
+Analyze debit and water level trends over the observation period.
+
+Steps:
+1. If selectedWellId is set, call get_well_history for that well
+2. If no well selected, ask the user to click a well on the map first — do NOT pick arbitrarily
+3. Comment on: trend direction (rising/falling/stable), magnitude of change, seasonal patterns
+4. If trend is falling >25%, flag for inspection
+""",
+
+    "daily_report": """## Task: Generate Daily Monitoring Report
+Produce a structured daily summary for the visible region.
+
+Steps:
+1. Call get_region_stats with the viewport bbox
+2. Call detect_anomalies (bbox-scoped) for current issues
+3. Call analyze_interference if any active wells are <2km apart
+4. Format report sections: Operational Status, Water Quality, Anomalies, Interference, Recommendations
+
+Keep sections concise: each 2-3 bullet points max.
+""",
+
     "depression_analysis": """## Task: Depression Cone Analysis
 When asked about depression cones or well interference:
 1. Call query_wells to get well locations and yields in viewport
