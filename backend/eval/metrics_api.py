@@ -83,6 +83,16 @@ async def trigger_eval():
     return {"status": "started", "message": "Eval pipeline started. Check /api/metrics for results."}
 
 
+@router.get("/run/status", tags=["metrics"])
+async def get_run_status():
+    """Return eval pipeline progress (idle / running / done)."""
+    status_path = RESULTS_DIR / "_status.json"
+    if not status_path.exists():
+        return {"state": "idle"}
+    with open(status_path) as f:
+        return json.load(f)
+
+
 @router.get("/models")
 async def list_models():
     """List evaluated models with routing info."""

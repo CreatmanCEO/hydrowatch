@@ -20,6 +20,13 @@ interface MetricsResponse {
   models: Record<string, ModelMetric>;
 }
 
+interface RunStatus {
+  state: "idle" | "running" | "done";
+  current?: number;
+  total?: number;
+  progress_pct?: number;
+}
+
 function pct(v: number): string {
   return `${(v * 100).toFixed(1)}%`;
 }
@@ -39,6 +46,7 @@ export function MetricsPanel() {
   const [data, setData] = useState<MetricsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [progress, setProgress] = useState<RunStatus | null>(null);
 
   const fetchMetrics = () => {
     fetch("/api/metrics")
@@ -51,10 +59,22 @@ export function MetricsPanel() {
 
   const handleRunEval = async () => {
     setIsRunning(true);
+    setProgress({ state: "running", current: 0, total: 0, progress_pct: 0 });
     try {
       await fetch("/api/metrics/run", { method: "POST" });
-      // Poll for results after 30s
-      setTimeout(() => { fetchMetrics(); setIsRunning(false); }, 30000);
+      const poll = setInterval(async () => {
+        try {
+          const r: RunStatus = await fetch("/api/metrics/run/status").then((x) => x.json());
+          setProgress(r);
+          if (r.state === "done") {
+            clearInterval(poll);
+            setIsRunning(false);
+            fetchMetrics();
+          }
+        } catch {
+          /* keep polling */
+        }
+      }, 2000);
     } catch {
       setIsRunning(false);
     }
@@ -82,6 +102,20 @@ export function MetricsPanel() {
           </button>
         </div>
       </div>
+
+      {progress && progress.state === "running" && (
+        <div>
+          <div className="w-full bg-gray-200 rounded h-2">
+            <div
+              className="bg-blue-600 h-2 rounded transition-all"
+              style={{ width: `${progress.progress_pct ?? 0}%` }}
+            />
+          </div>
+          <div className="text-xs text-gray-500 mt-1">
+            {progress.current ?? 0} / {progress.total ?? 0} cases ({(progress.progress_pct ?? 0).toFixed(1)}%)
+          </div>
+        </div>
+      )}
 
       {/* Comparison table */}
       <div className="overflow-x-auto">

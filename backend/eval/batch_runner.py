@@ -41,6 +41,21 @@ DEFAULT_CONTEXT = MapContext(
 )
 
 
+def _write_status(state: str, current: int, total: int, output_dir: Path) -> None:
+    """Write progress status JSON for /api/metrics/run/status polling."""
+    status_path = output_dir / "_status.json"
+    with open(status_path, "w") as f:
+        json.dump(
+            {
+                "state": state,
+                "current": current,
+                "total": total,
+                "progress_pct": round(100 * current / total, 1) if total else 0,
+            },
+            f,
+        )
+
+
 def load_eval_dataset(path: str | None = None) -> list[dict]:
     """Load evaluation test cases from JSONL."""
     if path is None:
@@ -202,7 +217,8 @@ async def run_eval(
 
     if output_dir is None:
         output_dir = str(Path(__file__).parent / "results")
-    Path(output_dir).mkdir(parents=True, exist_ok=True)
+    output_dir_path = Path(output_dir)
+    output_dir_path.mkdir(parents=True, exist_ok=True)
 
     cases = load_eval_dataset(dataset_path)
     wells_data = load_wells_data()
@@ -211,6 +227,9 @@ async def run_eval(
     settings = get_settings()
 
     all_results: list[EvalResult] = []
+    total = len(cases) * len(models)
+    counter = 0
+    _write_status("running", 0, total, output_dir_path)
 
     for model in models:
         print(f"\n=== Evaluating: {model} ===")
@@ -223,6 +242,8 @@ async def run_eval(
             )
             model_results.append(result)
             all_results.append(result)
+            counter += 1
+            _write_status("running", counter, total, output_dir_path)
 
         # Save per-model results
         save_results(model_results, f"{output_dir}/{model.replace('/', '_')}_results.jsonl")
@@ -234,6 +255,8 @@ async def run_eval(
     summary = {m: v.to_dict() for m, v in metrics.items()}
     with open(f"{output_dir}/summary.json", "w") as f:
         json.dump(summary, f, indent=2)
+
+    _write_status("done", total, total, output_dir_path)
 
     print("\n=== Summary ===")
     for model_name, m in metrics.items():
