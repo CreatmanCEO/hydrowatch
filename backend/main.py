@@ -282,42 +282,50 @@ async def chat_stream(request: ChatRequest):
             {"role": "user", "content": request.message},
         ]
 
+        # Agentic loop: keep calling LLM with tools until it returns plain text
+        # (no more tool_calls). Bounded by MAX_ITERATIONS to prevent runaway loops.
+        MAX_ITERATIONS = 6
+        global_call_idx = 0
+
         try:
-            response = await llm_router.acompletion(
-                model=model_pool,
-                messages=messages,
-                tools=TOOL_DEFINITIONS,
-                stream=True,
-                temperature=settings.llm_temperature,
-            )
+            for iteration in range(MAX_ITERATIONS):
+                response = await llm_router.acompletion(
+                    model=model_pool,
+                    messages=messages,
+                    tools=TOOL_DEFINITIONS,
+                    stream=True,
+                    temperature=settings.llm_temperature,
+                )
 
-            collected_content = ""
-            tool_calls_buffer = []
+                collected_content = ""
+                tool_calls_buffer = []
 
-            async for chunk in response:
-                delta = chunk.choices[0].delta if chunk.choices else None
-                if delta is None:
-                    continue
+                async for chunk in response:
+                    delta = chunk.choices[0].delta if chunk.choices else None
+                    if delta is None:
+                        continue
 
-                # Stream text content
-                if delta.content:
-                    collected_content += delta.content
-                    yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
+                    # Stream text content
+                    if delta.content:
+                        collected_content += delta.content
+                        yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
 
-                # Collect tool calls (arguments arrive in chunks during streaming)
-                if delta.tool_calls:
-                    for tc in delta.tool_calls:
-                        if tc.index is not None:
-                            while len(tool_calls_buffer) <= tc.index:
-                                tool_calls_buffer.append({"name": "", "arguments": ""})
-                            if tc.function and tc.function.name:
-                                tool_calls_buffer[tc.index]["name"] = tc.function.name
-                            if tc.function and tc.function.arguments:
-                                tool_calls_buffer[tc.index]["arguments"] += tc.function.arguments
+                    # Collect tool calls (arguments arrive in chunks during streaming)
+                    if delta.tool_calls:
+                        for tc in delta.tool_calls:
+                            if tc.index is not None:
+                                while len(tool_calls_buffer) <= tc.index:
+                                    tool_calls_buffer.append({"name": "", "arguments": ""})
+                                if tc.function and tc.function.name:
+                                    tool_calls_buffer[tc.index]["name"] = tc.function.name
+                                if tc.function and tc.function.arguments:
+                                    tool_calls_buffer[tc.index]["arguments"] += tc.function.arguments
 
-            # 7. Execute ALL tool calls, then ONE follow-up
-            if tool_calls_buffer:
-                # Parse all tool call arguments
+                # Loop exit: LLM returned plain text without tool calls
+                if not tool_calls_buffer:
+                    break
+
+                # Parse tool call arguments
                 parsed_calls = []
                 for tc in tool_calls_buffer:
                     try:
@@ -326,33 +334,37 @@ async def chat_stream(request: ChatRequest):
                         args = {}
                     parsed_calls.append((tc, args))
 
-                # Build single assistant message with all tool calls
-                assistant_tool_calls = [
-                    {"id": f"call_{tc['name']}_{i}", "type": "function",
-                     "function": {"name": tc["name"], "arguments": json.dumps(args)}}
-                    for i, (tc, args) in enumerate(parsed_calls)
-                ]
-                messages.append({"role": "assistant", "content": collected_content or None, "tool_calls": assistant_tool_calls})
+                # Build assistant message with this iteration's tool calls
+                assistant_tool_calls = []
+                for tc, args in parsed_calls:
+                    call_id = f"call_{tc['name']}_{global_call_idx}"
+                    global_call_idx += 1
+                    assistant_tool_calls.append({
+                        "id": call_id,
+                        "type": "function",
+                        "function": {"name": tc["name"], "arguments": json.dumps(args)},
+                    })
+                messages.append({
+                    "role": "assistant",
+                    "content": collected_content or None,
+                    "tool_calls": assistant_tool_calls,
+                })
 
                 # Execute all tools and add results
-                for i, (tc, args) in enumerate(parsed_calls):
+                for atc, (tc, args) in zip(assistant_tool_calls, parsed_calls):
                     yield f"data: {json.dumps({'type': 'tool_call', 'tool': tc['name'], 'args': args})}\n\n"
                     tool_result = tool_executor.execute(tc["name"], args)
                     yield f"data: {json.dumps({'type': 'tool_result', 'tool': tc['name'], 'success': tool_result.success, 'result': tool_result.result})}\n\n"
-                    messages.append({"role": "tool", "tool_call_id": f"call_{tc['name']}_{i}", "content": json.dumps(tool_result.result)})
+                    messages.append({
+                        "role": "tool",
+                        "tool_call_id": atc["id"],
+                        "content": json.dumps(tool_result.result),
+                    })
+                # Continue loop — next iteration LLM will see all tool results
 
-                # ONE follow-up call with all tool results
-                # No tools param — force text response, prevent LLM from attempting more tool calls as text
-                followup = await llm_router.acompletion(
-                    model=model_pool,
-                    messages=messages,
-                    stream=True,
-                    temperature=settings.llm_temperature,
-                )
-                async for chunk in followup:
-                    delta = chunk.choices[0].delta if chunk.choices else None
-                    if delta and delta.content:
-                        yield f"data: {json.dumps({'type': 'token', 'content': delta.content})}\n\n"
+            else:
+                # Loop completed all MAX_ITERATIONS without LLM returning plain text
+                yield f"data: {json.dumps({'type': 'token', 'content': f'\\n\\n[reached max tool-call iterations={MAX_ITERATIONS}]'})}\n\n"
 
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
