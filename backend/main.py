@@ -155,10 +155,23 @@ async def upload_csv(file: UploadFile = File(...)):
 # ---------------------------------------------------------------------------
 
 def _classify_task(message: str) -> str:
-    """Simple heuristic to classify user message into task type.
-    # TODO: Replace with LLM-based intent classifier in production
-    """
+    """Heuristic classifier — order matters: most specific first."""
     msg = message.lower()
+
+    if any(w in msg for w in ["depression cone", "drawdown", "isoline", "voronka", "влияние на уровень"]):
+        return "drawdown_analysis"
+    if any(w in msg for w in ["interference", "competing wells", "cone overlap", "mutual influence", "wells competing"]):
+        return "interference_analysis"
+    if any(w in msg for w in ["water quality", "drinking water", "salinity"]) or (
+        "tds" in msg or "chloride" in msg or "ph levels" in msg
+    ):
+        return "water_quality_report"
+    if any(w in msg for w in ["compare cluster", "cross-cluster", "between cluster"]):
+        return "cluster_comparison"
+    if any(w in msg for w in ["daily report", "daily monitoring", "daily summary"]):
+        return "daily_report"
+    if any(w in msg for w in ["trend", "time series", "history of"]):
+        return "trend_analysis"
     if any(w in msg for w in ["csv", "upload", "validate", "file"]):
         return "validate_csv"
     if any(w in msg for w in ["anomal", "decline", "spike", "fault", "problem", "scan"]):
@@ -167,14 +180,8 @@ def _classify_task(message: str) -> str:
         return "calibration_advice"
     if any(w in msg for w in ["interpret", "why", "cause", "explain", "reason", "root cause"]):
         return "interpret_anomaly"
-    if any(w in msg for w in ["depression", "cone", "interference", "drawdown"]):
-        return "depression_analysis"
-    if any(w in msg for w in ["region", "area", "viewport", "overview", "stats", "summary", "report", "daily"]):
+    if any(w in msg for w in ["region", "area", "viewport", "overview", "stats", "summary", "report"]):
         return "get_region_stats"
-    if any(w in msg for w in ["quality", "tds", "chloride", "ph ", "salinity", "compare cluster"]):
-        return "general_question"
-    if any(w in msg for w in ["history", "trend", "time series", "chart"]):
-        return "get_well_history"
     if any(w in msg for w in ["find", "search", "list", "wells", "query", "status", "active", "inactive"]):
         return "query_wells"
     return "general_question"

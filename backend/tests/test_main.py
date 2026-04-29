@@ -127,3 +127,32 @@ class TestChatStream:
             },
         })
         assert resp.status_code == 200
+
+
+class TestTaskClassifier:
+    def test_classifies_interference(self):
+        from main import _classify_task
+        assert _classify_task("Check well interference patterns") == "interference_analysis"
+        assert _classify_task("Wells competing for water") == "interference_analysis"
+        assert _classify_task("Mutual influence between wells") == "interference_analysis"
+
+    def test_classifies_drawdown(self):
+        from main import _classify_task
+        assert _classify_task("Show depression cone for well X") == "drawdown_analysis"
+        assert _classify_task("What is the drawdown at this well?") == "drawdown_analysis"
+        assert _classify_task("Generate isolines for AUH-01-001") == "drawdown_analysis"
+
+    def test_classifies_water_quality(self):
+        from main import _classify_task
+        assert _classify_task("Generate a water quality report") == "water_quality_report"
+        assert _classify_task("Check TDS levels in viewport") == "water_quality_report"
+
+    def test_classifies_cluster_comparison(self):
+        from main import _classify_task
+        assert _classify_task("Compare clusters") == "cluster_comparison"
+        assert _classify_task("Cross-cluster comparison") == "cluster_comparison"
+
+    def test_classifies_daily_report(self):
+        from main import _classify_task
+        assert _classify_task("Generate daily report") == "daily_report"
+        assert _classify_task("Daily monitoring summary") == "daily_report"

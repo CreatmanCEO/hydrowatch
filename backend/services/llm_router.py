@@ -9,9 +9,15 @@ TASK_ROUTING = {
     "query_wells":          "pool-a",
     "get_region_stats":     "pool-a",
     "get_well_history":     "pool-a",
+    "trend_analysis":       "pool-a",
+    "water_quality_report": "pool-a",
+    "cluster_comparison":   "pool-a",
     "detect_anomalies":     "pool-b",
     "interpret_anomaly":    "pool-b",
-    "depression_analysis":  "pool-b",
+    "interference_analysis":"pool-b",
+    "drawdown_analysis":    "pool-b",
+    "depression_analysis":  "pool-b",  # legacy alias, keep
+    "daily_report":         "pool-b",
     "calibration_advice":   "pool-b-upgrade",
     "general_question":     "pool-b",
 }
