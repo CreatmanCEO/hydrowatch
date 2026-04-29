@@ -4,7 +4,7 @@ import { useMapStore } from "@/stores/mapStore";
 
 const LAYERS = [
   { id: "wells", label: "Wells", icon: "⬤" },
-  { id: "depression_cones", label: "Depression Cones", icon: "◎" },
+  { id: "depression_cone", label: "Depression Cone", icon: "◎" },
   { id: "interference", label: "Interference", icon: "⟷" },
 ];
 

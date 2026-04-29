@@ -23,7 +23,7 @@ def sample_context():
     ctx = MapContext(
         center_lat=24.45, center_lng=54.65, zoom=12,
         bbox=[54.61, 24.42, 54.69, 24.48],
-        active_layers=["wells", "depression_cones"],
+        active_layers=["wells", "depression_cone"],
         selected_well_id=next(iter(wells)),
     )
     return build_context_prompt(ctx, wells)

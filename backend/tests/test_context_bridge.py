@@ -54,11 +54,11 @@ class TestBuildContextPrompt:
         ctx = MapContext(
             center_lat=24.45, center_lng=54.65, zoom=12,
             bbox=[54.61, 24.42, 54.69, 24.48],
-            active_layers=["wells", "depression_cones"],
+            active_layers=["wells", "depression_cone"],
         )
         prompt = build_context_prompt(ctx, wells_data)
         assert "wells" in prompt
-        assert "depression_cones" in prompt
+        assert "depression_cone" in prompt
 
     def test_prompt_with_selected_well(self, wells_data, sample_well_id):
         ctx = MapContext(

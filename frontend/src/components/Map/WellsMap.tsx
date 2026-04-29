@@ -122,7 +122,7 @@ export function WellsMap() {
         <NavigationControl position="top-left" />
 
         {/* Depression cone layer (Theis isolines) — render BEFORE wells so well dots stay on top */}
-        {activeLayers.includes("depression_cones") && wellsGeoJSON && (
+        {activeLayers.includes("depression_cone") && wellsGeoJSON && (
           <DepressionConeLayer
             wellsGeoJSON={wellsGeoJSON}
             selectedWellId={selectedWellId}
@@ -199,7 +199,7 @@ export function WellsMap() {
       <LayerControls />
 
       {/* Cone controls + legend (only when depression cones active) */}
-      {activeLayers.includes("depression_cones") && (
+      {activeLayers.includes("depression_cone") && (
         <>
           <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 flex gap-2">
             <ConeModeToggle value={coneMode} onChange={setConeMode} />
