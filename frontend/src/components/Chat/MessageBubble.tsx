@@ -3,6 +3,8 @@
 import type { ChatMessage } from "@/types";
 import { AnomalyCardComponent } from "./AnomalyCard";
 import { WellHistoryChart } from "./WellHistoryChart";
+import { InterferenceCardView } from "./InterferenceCardView";
+import { DrawdownCardView } from "./DrawdownCardView";
 
 export function MessageBubble({ message }: { message: ChatMessage }) {
   const isUser = message.role === "user";
@@ -58,6 +60,12 @@ export function MessageBubble({ message }: { message: ChatMessage }) {
           }
           if (card.type === "well_history") {
             return <WellHistoryChart key={i} data={card} />;
+          }
+          if (card.type === "interference_card") {
+            return <InterferenceCardView key={i} card={card} />;
+          }
+          if (card.type === "drawdown_card") {
+            return <DrawdownCardView key={i} card={card} />;
           }
           return null;
         })}
