@@ -20,3 +20,4 @@ adtk==0.6.2
 statsmodels==0.14.4
 folium==0.19.5
 python-multipart==0.0.20
+scikit-image==0.25.0
