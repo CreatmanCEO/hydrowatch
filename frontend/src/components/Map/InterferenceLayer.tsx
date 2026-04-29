@@ -1,77 +1,228 @@
 'use client';
 
-import { useMemo } from "react";
-import { Source, Layer } from "react-map-gl/maplibre";
-import type { WellsGeoJSON } from "@/types";
-import type { FeatureCollection, LineString } from "geojson";
+import { useEffect, useState, useCallback } from "react";
+import { Source, Layer, Popup, useMap } from "react-map-gl/maplibre";
+import type { MapMouseEvent, MapGeoJSONFeature } from "maplibre-gl";
+import type { InterferencePair, InterferenceResult, WellsGeoJSON } from "@/types";
+import type { FeatureCollection, LineString, Point } from "geojson";
+import { InterferencePopup } from "./InterferencePopup";
 
 interface Props {
   wellsGeoJSON: WellsGeoJSON;
+  bbox: [number, number, number, number];
 }
 
-const INTERFERENCE_RADIUS_KM = 5;
+const COLOR_LOW = "#16a34a";
+const COLOR_MID = "#eab308";
+const COLOR_HIGH = "#dc2626";
+const HIT_LAYER_ID = "interference-lines-hit";
 
-function haversineKm(lat1: number, lon1: number, lat2: number, lon2: number): number {
-  const R = 6371;
-  const dLat = ((lat2 - lat1) * Math.PI) / 180;
-  const dLon = ((lon2 - lon1) * Math.PI) / 180;
-  const a =
-    Math.sin(dLat / 2) ** 2 +
-    Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
-  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+function colorForCoef(c: number): string {
+  if (c >= 0.6) return COLOR_HIGH;
+  if (c >= 0.3) return COLOR_MID;
+  return COLOR_LOW;
 }
 
-export function InterferenceLayer({ wellsGeoJSON }: Props) {
-  const linesGeoJSON = useMemo<FeatureCollection<LineString>>(() => {
-    const features: FeatureCollection<LineString>["features"] = [];
-    const wells = wellsGeoJSON.features;
+export function InterferenceLayer({ wellsGeoJSON, bbox }: Props) {
+  const { current: mapRef } = useMap();
+  const [data, setData] = useState<InterferenceResult | null>(null);
+  const [popup, setPopup] = useState<{ pair: InterferencePair; lng: number; lat: number } | null>(
+    null
+  );
 
-    for (let i = 0; i < wells.length; i++) {
-      for (let j = i + 1; j < wells.length; j++) {
-        const [lon1, lat1] = wells[i].geometry.coordinates;
-        const [lon2, lat2] = wells[j].geometry.coordinates;
-        const dist = haversineKm(lat1, lon1, lat2, lon2);
+  useEffect(() => {
+    const ctrl = new AbortController();
+    fetch("/api/tools/analyze_interference", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bbox, t_days: 30, min_coefficient: 0.1 }),
+      signal: ctrl.signal,
+    })
+      .then((r) => r.json())
+      .then((d: InterferenceResult) => setData(d))
+      .catch(() => {});
+    return () => ctrl.abort();
+  }, [bbox]);
 
-        if (dist < INTERFERENCE_RADIUS_KM) {
-          const bothActive = wells[i].properties.status === "active" && wells[j].properties.status === "active";
-          const totalYield = wells[i].properties.current_yield_ls + wells[j].properties.current_yield_ls;
+  const onLineClick = useCallback(
+    (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {
+      const f = e.features?.[0];
+      if (!f || !data) return;
+      const idx = f.properties?.pair_idx as number | undefined;
+      if (idx === undefined) return;
+      const pair = data.pairs[idx];
+      if (!pair) return;
+      const { lng, lat } = e.lngLat;
+      setPopup({ pair, lng, lat });
+      e.originalEvent?.stopPropagation?.();
+    },
+    [data]
+  );
 
-          features.push({
-            type: "Feature",
+  // Bind layer-scoped click via maplibre native API (react-map-gl <Layer>
+  // doesn't forward onClick in this version).
+  useEffect(() => {
+    const map = mapRef?.getMap();
+    if (!map) return;
+
+    const onMouseEnter = () => {
+      map.getCanvas().style.cursor = "pointer";
+    };
+    const onMouseLeave = () => {
+      map.getCanvas().style.cursor = "";
+    };
+
+    map.on("click", HIT_LAYER_ID, onLineClick);
+    map.on("mouseenter", HIT_LAYER_ID, onMouseEnter);
+    map.on("mouseleave", HIT_LAYER_ID, onMouseLeave);
+    return () => {
+      map.off("click", HIT_LAYER_ID, onLineClick);
+      map.off("mouseenter", HIT_LAYER_ID, onMouseEnter);
+      map.off("mouseleave", HIT_LAYER_ID, onMouseLeave);
+    };
+  }, [mapRef, onLineClick]);
+
+  if (!data || data.pairs.length === 0) return null;
+
+  const coords: Record<string, [number, number]> = {};
+  for (const f of wellsGeoJSON.features) {
+    coords[f.properties.id] = f.geometry.coordinates as [number, number];
+  }
+
+  // Single hit-source: one straight LineString per pair, used only for click hit-test.
+  const hitLines: FeatureCollection<LineString> = {
+    type: "FeatureCollection",
+    features: data.pairs
+      .filter((p) => coords[p.well_a] && coords[p.well_b])
+      .map((p, idx) => ({
+        type: "Feature" as const,
+        id: idx,
+        geometry: {
+          type: "LineString" as const,
+          coordinates: [coords[p.well_a], coords[p.well_b]],
+        },
+        properties: {
+          severity: p.severity,
+          pair_idx: idx,
+        },
+      })),
+  };
+
+  // Per-pair gradient sources (line-gradient stops must be constants — one source per pair).
+  const gradientSources = data.pairs
+    .filter((p) => coords[p.well_a] && coords[p.well_b])
+    .map((p, idx) => ({
+      idx,
+      data: {
+        type: "FeatureCollection" as const,
+        features: [
+          {
+            type: "Feature" as const,
             geometry: {
-              type: "LineString",
-              coordinates: [[lon1, lat1], [lon2, lat2]],
+              type: "LineString" as const,
+              coordinates: [coords[p.well_a], coords[p.well_b]],
             },
-            properties: {
-              well_a: wells[i].properties.id,
-              well_b: wells[j].properties.id,
-              distance_km: Math.round(dist * 100) / 100,
-              total_yield: totalYield,
-              both_active: bothActive,
-              width: Math.max(1, Math.min(4, totalYield / 15)),
-            },
-          });
-        }
-      }
-    }
+            properties: {},
+          },
+        ],
+      } as FeatureCollection<LineString>,
+      colorA: colorForCoef(p.coef_at_a),
+      colorB: colorForCoef(p.coef_at_b),
+    }));
 
-    console.log(`InterferenceLayer: ${features.length} lines generated`);
-    return { type: "FeatureCollection" as const, features };
-  }, [wellsGeoJSON]);
-
-  if (linesGeoJSON.features.length === 0) return null;
+  const labels: FeatureCollection<Point> = {
+    type: "FeatureCollection",
+    features: data.pairs
+      .filter((p) => coords[p.well_a] && coords[p.well_b])
+      .map((p) => {
+        const [lon_a, lat_a] = coords[p.well_a];
+        const [lon_b, lat_b] = coords[p.well_b];
+        const coefMax = Math.max(p.coef_at_a, p.coef_at_b);
+        return {
+          type: "Feature" as const,
+          geometry: {
+            type: "Point" as const,
+            coordinates: [(lon_a + lon_b) / 2, (lat_a + lat_b) / 2],
+          },
+          properties: {
+            label: `${Math.round(coefMax * 100)}% / ${p.drawdown_midpoint_m}m`,
+            severity: p.severity,
+          },
+        };
+      }),
+  };
 
   return (
-    <Source id="interference-lines" type="geojson" data={linesGeoJSON}>
-      <Layer
-        id="interference-lines-layer"
-        type="line"
-        paint={{
-          "line-color": "#ef4444",
-          "line-width": 3,
-          "line-opacity": 0.8,
-        }}
-      />
-    </Source>
+    <>
+      {/* Per-pair gradient lines (one Source each so line-gradient stops can vary) */}
+      {gradientSources.map(({ idx, data: lineData, colorA, colorB }) => (
+        <Source
+          key={`interference-grad-${idx}`}
+          id={`interference-grad-${idx}`}
+          type="geojson"
+          data={lineData}
+          lineMetrics={true}
+        >
+          <Layer
+            id={`interference-grad-${idx}-line`}
+            type="line"
+            paint={{
+              "line-width": 3,
+              "line-opacity": 0.9,
+              "line-gradient": [
+                "interpolate",
+                ["linear"],
+                ["line-progress"],
+                0, colorA,
+                0.5, COLOR_MID,
+                1, colorB,
+              ],
+            }}
+          />
+        </Source>
+      ))}
+
+      {/* Single source for click hit-test (wide invisible buffer) */}
+      <Source id="interference-hit" type="geojson" data={hitLines}>
+        <Layer
+          id={HIT_LAYER_ID}
+          type="line"
+          paint={{ "line-width": 14, "line-color": "#000000", "line-opacity": 0 }}
+        />
+      </Source>
+
+      <Source id="interference-labels" type="geojson" data={labels}>
+        <Layer
+          id="interference-labels-symbol"
+          type="symbol"
+          minzoom={11}
+          layout={{
+            "text-field": ["get", "label"],
+            "text-size": 10,
+            "text-offset": [0, 0],
+            "text-anchor": "center",
+            "text-allow-overlap": true,
+          }}
+          paint={{
+            "text-color": "#1f2937",
+            "text-halo-color": "#ffffff",
+            "text-halo-width": 1.5,
+          }}
+        />
+      </Source>
+
+      {popup && (
+        <Popup
+          longitude={popup.lng}
+          latitude={popup.lat}
+          anchor="bottom"
+          onClose={() => setPopup(null)}
+          closeOnClick={false}
+          maxWidth="360px"
+        >
+          <InterferencePopup pair={popup.pair} />
+        </Popup>
+      )}
+    </>
   );
 }

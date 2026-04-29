@@ -47,6 +47,7 @@ const wellCircleOpacity: maplibregl.ExpressionSpecification = [
 export function WellsMap() {
   const {
     latitude, longitude, zoom,
+    bounds,
     setViewport, setBounds,
     wellsGeoJSON, setWellsGeoJSON,
     selectedWellId, selectWell,
@@ -155,9 +156,9 @@ export function WellsMap() {
           <DepressionConeLayer wellsGeoJSON={wellsGeoJSON} />
         )}
 
-        {/* Interference lines */}
-        {activeLayers.includes("interference") && wellsGeoJSON && (
-          <InterferenceLayer wellsGeoJSON={wellsGeoJSON} />
+        {/* Interference lines (Theis-driven) */}
+        {activeLayers.includes("interference") && wellsGeoJSON && bounds && (
+          <InterferenceLayer wellsGeoJSON={wellsGeoJSON} bbox={bounds} />
         )}
 
         {/* Well popup */}

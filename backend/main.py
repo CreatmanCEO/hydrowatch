@@ -9,6 +9,7 @@ from typing import AsyncIterator
 from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
+from pydantic import BaseModel as _BaseModel
 
 from config import get_settings
 from models.schemas import ChatRequest, ChatResponse, MapContext
@@ -100,6 +101,25 @@ async def get_wells():
     geojson_path = Path(settings.data_dir) / "wells.geojson"
     with open(geojson_path) as f:
         return json.load(f)
+
+
+# ---------------------------------------------------------------------------
+# Theis tools (direct HTTP for frontend map layers)
+# ---------------------------------------------------------------------------
+
+class _InterferenceRequest(_BaseModel):
+    bbox: list[float] | None = None
+    t_days: int = 30
+    min_coefficient: float = 0.10
+
+
+@app.post("/api/tools/analyze_interference", tags=["tools"])
+async def api_analyze_interference(req: _InterferenceRequest):
+    from tools.analyze_interference import analyze_interference
+    result = analyze_interference(
+        bbox=req.bbox, t_days=req.t_days, min_coefficient=req.min_coefficient
+    )
+    return result.model_dump()
 
 
 @app.get("/api/wells/{well_id}/history", tags=["wells"])
