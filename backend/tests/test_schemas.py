@@ -4,6 +4,8 @@ from models.schemas import (
     MapContext, WellInfo, AnomalyCard, ValidationResult,
     ChatRequest, ChatResponse, ToolCall, ToolResult,
     RegionStats, WellHistory,
+    InterferencePair, InterferenceResult, InterferenceCard,
+    DrawdownIsoline, DrawdownGrid, DrawdownCard,
 )
 
 
@@ -133,3 +135,85 @@ class TestChatModels:
         resp = ChatResponse(message="Found 2 anomalies", model_used="gemini-2.5-flash")
         assert resp.cards == []
         assert resp.tool_calls == []
+
+
+class TestInterferencePair:
+    def test_valid_pair(self):
+        p = InterferencePair(
+            well_a="AUH-01-001", well_b="AUH-01-002",
+            distance_km=0.22,
+            coef_at_a=0.61, coef_at_b=0.18,
+            drawdown_midpoint_m=4.2,
+            severity="critical",
+            dominant_well="AUH-01-002",
+            recommendation="Reduce pumping at AUH-01-002.",
+        )
+        assert p.severity == "critical"
+
+    def test_invalid_severity_rejected(self):
+        with pytest.raises(ValueError):
+            InterferencePair(
+                well_a="A", well_b="B", distance_km=1,
+                coef_at_a=0.1, coef_at_b=0.1,
+                drawdown_midpoint_m=1, severity="invalid",
+                dominant_well="A", recommendation="x",
+            )
+
+
+class TestInterferenceResult:
+    def test_full_result(self):
+        r = InterferenceResult(
+            pairs=[],
+            t_days=30,
+            wells_analyzed=25,
+            pairs_significant=0,
+        )
+        assert r.type == "interference_result"
+
+
+class TestInterferenceCard:
+    def test_summary_card(self):
+        c = InterferenceCard(
+            pairs_summary={"critical": 2, "high": 4, "medium": 6, "low": 0},
+            top_concerns=[
+                {"well_a": "A", "well_b": "B", "coef_max": 0.61, "action": "Reduce pumping at B"}
+            ],
+            regional_pattern="Mussafah cluster shows correlated drawdown",
+        )
+        assert c.type == "interference_card"
+
+
+class TestDrawdownIsoline:
+    def test_isoline(self):
+        iso = DrawdownIsoline(
+            level_m=1.0,
+            polygon={"type": "MultiPolygon", "coordinates": []},
+        )
+        assert iso.level_m == 1.0
+
+
+class TestDrawdownGrid:
+    def test_grid(self):
+        g = DrawdownGrid(
+            well_id="AUH-01-001",
+            center=[54.7, 24.4],
+            t_days=30,
+            isolines=[],
+            max_drawdown_m=6.8,
+            interfering_wells=["AUH-01-002"],
+        )
+        assert g.type == "drawdown_grid"
+
+
+class TestDrawdownCard:
+    def test_card(self):
+        c = DrawdownCard(
+            well_id="AUH-01-001",
+            t_days=30,
+            max_drawdown_m=6.8,
+            cone_radius_1m_km=2.3,
+            interfering_wells=["AUH-01-002"],
+            assessment="Cone radius >2km indicates excessive pumping.",
+            recommendation="Consider reducing pumping rate by 20%.",
+        )
+        assert c.type == "drawdown_card"

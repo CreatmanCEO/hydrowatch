@@ -114,10 +114,76 @@ class ToolResult(BaseModel):
     error: str | None = None
 
 
+# --- Interference (Theis-based) ---
+
+class InterferencePair(BaseModel):
+    """Hydraulic interference between two wells (Theis-based)."""
+    well_a: str
+    well_b: str
+    distance_km: float
+    coef_at_a: float = Field(ge=0, le=1, description="Fraction of drawdown at A caused by B")
+    coef_at_b: float = Field(ge=0, le=1, description="Fraction of drawdown at B caused by A")
+    drawdown_midpoint_m: float = Field(ge=0)
+    severity: Literal["low", "medium", "high", "critical"]
+    dominant_well: str
+    recommendation: str
+
+
+class InterferenceResult(BaseModel):
+    """Tool output: list of significant interference pairs."""
+    type: Literal["interference_result"] = "interference_result"
+    pairs: list[InterferencePair]
+    t_days: int
+    wells_analyzed: int
+    pairs_significant: int
+
+
+class InterferenceCard(BaseModel):
+    """Frontend-rendered card summarizing interference analysis."""
+    type: Literal["interference_card"] = "interference_card"
+    pairs_summary: dict[str, int]
+    top_concerns: list[dict[str, Any]]
+    regional_pattern: str = ""
+
+
+# --- Drawdown (Theis cone) ---
+
+class DrawdownIsoline(BaseModel):
+    """One contour level of the depression cone."""
+    level_m: float = Field(gt=0)
+    polygon: dict[str, Any]  # GeoJSON MultiPolygon
+
+
+class DrawdownGrid(BaseModel):
+    """Tool output: Theis drawdown grid as isoline polygons."""
+    type: Literal["drawdown_grid"] = "drawdown_grid"
+    well_id: str
+    center: list[float] = Field(min_length=2, max_length=2)  # [lng, lat]
+    t_days: int
+    isolines: list[DrawdownIsoline]
+    max_drawdown_m: float = Field(ge=0)
+    interfering_wells: list[str] = Field(default_factory=list)
+
+
+class DrawdownCard(BaseModel):
+    """Frontend-rendered card summarizing depression cone analysis."""
+    type: Literal["drawdown_card"] = "drawdown_card"
+    well_id: str
+    t_days: int
+    max_drawdown_m: float
+    cone_radius_1m_km: float
+    interfering_wells: list[str]
+    assessment: str
+    recommendation: str
+
+
 class ChatResponse(BaseModel):
     """Full chat response (non-streaming)."""
     message: str
-    cards: list[AnomalyCard | ValidationResult | RegionStats | WellHistory] = Field(default_factory=list)
+    cards: list[
+        AnomalyCard | ValidationResult | RegionStats | WellHistory
+        | InterferenceCard | DrawdownCard
+    ] = Field(default_factory=list)
     tool_calls: list[ToolCall] = Field(default_factory=list)
     model_used: str = ""
     latency_ms: int = 0
