@@ -80,6 +80,16 @@ export function WellsMap() {
     }
   }, [setViewport, setBounds]);
 
+  // Initialize bounds on first map load — without this InterferenceLayer (which
+  // gates on bounds !== null) doesn't mount until the user pans the map.
+  const onMapLoad = useCallback(
+    (evt: { target: { getBounds(): { getWest(): number; getSouth(): number; getEast(): number; getNorth(): number } } }) => {
+      const b = evt.target.getBounds();
+      setBounds([b.getWest(), b.getSouth(), b.getEast(), b.getNorth()]);
+    },
+    [setBounds]
+  );
+
   const onMapClick = useCallback((evt: MapLayerMouseEvent) => {
     const feature = evt.features?.[0];
     if (feature && feature.properties) {
@@ -104,6 +114,7 @@ export function WellsMap() {
         style={{ width: "100%", height: "100%" }}
         mapStyle={MAP_STYLE}
         onMoveEnd={onMoveEnd}
+        onLoad={onMapLoad as never}
         onClick={onMapClick}
         interactiveLayerIds={["wells-circle"]}
         cursor="pointer"

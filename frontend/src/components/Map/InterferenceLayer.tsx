@@ -30,19 +30,27 @@ export function InterferenceLayer({ wellsGeoJSON, bbox }: Props) {
     null
   );
 
+  // Stable string key avoids re-fetching when WellsMap rebuilds the bbox
+  // tuple on every onMoveEnd even though the values are unchanged.
+  const bboxKey = bbox.join(",");
+
   useEffect(() => {
-    const ctrl = new AbortController();
+    let isCurrent = true;
     fetch("/api/tools/analyze_interference", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ bbox, t_days: 30, min_coefficient: 0.1 }),
-      signal: ctrl.signal,
     })
       .then((r) => r.json())
-      .then((d: InterferenceResult) => setData(d))
+      .then((d: InterferenceResult) => {
+        if (isCurrent) setData(d);
+      })
       .catch(() => {});
-    return () => ctrl.abort();
-  }, [bbox]);
+    return () => {
+      isCurrent = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- bbox read via closure; bboxKey is the stable trigger.
+  }, [bboxKey]);
 
   const onLineClick = useCallback(
     (e: MapMouseEvent & { features?: MapGeoJSONFeature[] }) => {

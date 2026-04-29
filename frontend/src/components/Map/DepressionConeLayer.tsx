@@ -58,16 +58,21 @@ interface Props {
 export function DepressionConeLayer({ wellsGeoJSON, selectedWellId, mode, tDays }: Props) {
   const [grids, setGrids] = useState<DrawdownGrid[]>([]);
 
+  // Resolve targets once and derive a stable string key so wellsGeoJSON
+  // reference churn doesn't refire the fetch.
+  const targets =
+    mode === "selected"
+      ? selectedWellId
+        ? [selectedWellId]
+        : []
+      : wellsGeoJSON.features
+          .filter((f) => f.properties.status === "active")
+          .map((f) => f.properties.id)
+          .sort();
+  const targetsKey = targets.join(",");
+
   useEffect(() => {
-    const ctrl = new AbortController();
-    const targets =
-      mode === "selected"
-        ? selectedWellId
-          ? [selectedWellId]
-          : []
-        : wellsGeoJSON.features
-            .filter((f) => f.properties.status === "active")
-            .map((f) => f.properties.id);
+    let isCurrent = true;
 
     if (targets.length === 0) {
       setGrids([]);
@@ -80,15 +85,19 @@ export function DepressionConeLayer({ wellsGeoJSON, selectedWellId, mode, tDays 
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ well_id: wid, t_days: tDays, extent_km: 7, resolution: 50 }),
-          signal: ctrl.signal,
         }).then((r) => r.json() as Promise<DrawdownGrid>)
       )
     )
-      .then(setGrids)
+      .then((result) => {
+        if (isCurrent) setGrids(result);
+      })
       .catch(() => {});
 
-    return () => ctrl.abort();
-  }, [selectedWellId, mode, tDays, wellsGeoJSON]);
+    return () => {
+      isCurrent = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- targets read via closure; targetsKey is the stable trigger.
+  }, [targetsKey, mode, tDays]);
 
   if (grids.length === 0) return null;
 
